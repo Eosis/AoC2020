@@ -9,6 +9,10 @@ struct Entry {
     password: String,
 }
 
+fn parse_input(input: &str) -> Vec<Entry> {
+    input.split('\n').filter_map(line_to_entry).collect()
+}
+
 fn line_to_entry(line: &str) -> Option<Entry> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(\d+)-(\d+) (\w): (\w+)").unwrap();
@@ -27,30 +31,30 @@ fn line_to_entry(line: &str) -> Option<Entry> {
     })
 }
 
-fn parse_input(input: &str) -> Vec<Entry> {
-    input.split('\n').filter_map(line_to_entry).collect()
-}
-
 fn part_1(input: Vec<Entry>) -> usize {
     input
         .iter()
-        .filter(|entry| {
-            let count = entry.password.chars().filter(|&c| c == entry.check).count();
-            count <= entry.max && count >= entry.min
-        })
+        .filter(check_part_1_criteria)
         .count()
 }
 
+fn part_2(input: Vec<Entry>) -> usize {
+    input.iter().filter(check_part_2_criteria).count()
+}
+
+#[inline]
+fn check_part_1_criteria(entry: &&Entry) -> bool {
+    let count = entry.password.chars().filter(|&c| c == entry.check).count();
+    (entry.min..=entry.max).contains(&count)
+}
+
+#[inline]
 fn check_part_2_criteria(entry: &&Entry) -> bool {
     let bytes = entry.password.as_bytes();
     let (idx1, idx2) = (entry.min - 1, entry.max - 1);
     let (first, second) = (bytes[idx1] as char, bytes[idx2] as char);
     let (res1, res2) = (first == entry.check, second == entry.check);
     res1 ^ res2
-}
-
-fn part_2(input: Vec<Entry>) -> usize {
-    input.iter().filter(check_part_2_criteria).count()
 }
 
 pub fn solve_part_1() -> Result<(), ()> {
@@ -68,7 +72,6 @@ pub fn solve_part_2() -> Result<(), ()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     const TEST_INPUT: &str = "1-3 a: abcde\n\
                              1-3 b: cdefg\n\
                              2-9 c: ccccccccc\n";
