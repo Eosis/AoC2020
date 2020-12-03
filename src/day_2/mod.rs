@@ -32,10 +32,7 @@ fn line_to_entry(line: &str) -> Option<Entry> {
 }
 
 fn part_1(input: Vec<Entry>) -> usize {
-    input
-        .iter()
-        .filter(check_part_1_criteria)
-        .count()
+    input.iter().filter(check_part_1_criteria).count()
 }
 
 fn part_2(input: Vec<Entry>) -> usize {
@@ -75,6 +72,7 @@ mod tests {
     const TEST_INPUT: &str = "1-3 a: abcde\n\
                              1-3 b: cdefg\n\
                              2-9 c: ccccccccc\n";
+
     #[test]
     fn test_part_1() {
         let input = parse_input(TEST_INPUT);

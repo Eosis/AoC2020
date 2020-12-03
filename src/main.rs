@@ -1,5 +1,6 @@
 mod day_1;
 mod day_2;
+mod day_3;
 
 use argh::FromArgs;
 
@@ -22,6 +23,8 @@ fn main() {
         (1, 2) => day_1::solve_part_2().expect("Failed to find the answer"),
         (2, 1) => day_2::solve_part_1().expect("Failed_to_find the answer"),
         (2, 2) => day_2::solve_part_2().expect("Failed_to_find the answer"),
+        (3, 1) => day_3::solve_part_1().expect("Failed_to_find the answer"),
+        (3, 2) => day_3::solve_part_2().expect("Failed_to_find the answer"),
         (_, _) => unimplemented!("This day no work yet, brah."),
     };
 }
