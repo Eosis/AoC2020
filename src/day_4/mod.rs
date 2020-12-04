@@ -161,49 +161,49 @@ impl TryFrom<&str> for Entry {
                 "byr" => {
                     found[0] = true;
                     entry.byr = value.to_string();
-                    if let Err(_) = Entry::parse_byr(&entry.byr) {
+                    if Entry::parse_byr(&entry.byr).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
                 "iyr" => {
                     found[1] = true;
                     entry.iyr = value.to_string();
-                    if let Err(_) = Entry::parse_iyr(&entry.iyr) {
+                    if Entry::parse_iyr(&entry.iyr).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
                 "eyr" => {
                     found[2] = true;
                     entry.eyr = value.to_string();
-                    if let Err(_) = Entry::parse_eyr(&entry.eyr) {
+                    if Entry::parse_eyr(&entry.eyr).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
                 "hgt" => {
                     found[3] = true;
                     entry.hgt = value.to_string();
-                    if let Err(_) = Entry::parse_hgt(&entry.hgt) {
+                    if Entry::parse_hgt(&entry.hgt).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
                 "hcl" => {
                     found[4] = true;
                     entry.hcl = value.to_string();
-                    if let Err(_) = Entry::parse_hcl(&entry.hcl) {
+                    if Entry::parse_hcl(&entry.hcl).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
                 "ecl" => {
                     found[5] = true;
                     entry.ecl = value.to_string();
-                    if let Err(_) = Entry::parse_ecl(&entry.ecl) {
+                    if Entry::parse_ecl(&entry.ecl).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
                 "pid" => {
                     found[6] = true;
                     entry.pid = value.to_string();
-                    if let Err(_) = Entry::parse_pid(&entry.pid) {
+                    if Entry::parse_pid(&entry.pid).is_err() {
                         return Err(anyhow::Error::new(GenericError {}));
                     }
                 }
@@ -257,32 +257,26 @@ mod tests {
 
     #[test]
     fn test_example_validity() {
+        // Birth year parsing
         assert!(Entry::parse_byr("2002").is_ok());
         assert!(Entry::parse_byr("2003").is_err());
-        // hgt valid:   60in
-        // hgt valid:   190cm
-        // hgt invalid: 190in
-        // hgt invalid: 190
 
+        // Height parsing
         assert!(Entry::parse_hgt("60in").is_ok());
         assert!(Entry::parse_hgt("190cm").is_ok());
         assert!(Entry::parse_hgt("190in").is_err());
         assert!(Entry::parse_hgt("190").is_err());
 
-        // hcl valid:   #123abc
-        // hcl invalid: #123abz
-        // hcl invalid: 123abc
+        // Hair color parsing
         assert!(Entry::parse_hcl("#123abc").is_ok());
         assert!(Entry::parse_hcl("#123abz").is_err());
         assert!(Entry::parse_hcl("123abc").is_err());
 
-        // ecl valid:   brn
-        // ecl invalid: wat
+        // Eye color parsing
         assert!(Entry::parse_ecl("brn").is_ok());
         assert!(Entry::parse_ecl("wat").is_err());
 
-        // pid valid:   000000001
-        // pid invalid: 0123456789
+        // Passport ID parsing.
         assert!(Entry::parse_pid("000000001").is_ok());
         assert!(Entry::parse_pid("0123456789").is_err());
     }
