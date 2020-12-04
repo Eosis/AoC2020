@@ -1,6 +1,7 @@
 mod day_1;
 mod day_2;
 mod day_3;
+mod day_4;
 
 use argh::FromArgs;
 
@@ -18,13 +19,16 @@ struct Args {
 
 fn main() {
     let args: Args = argh::from_env();
+    const FAILURE_TEXT: &str = "Failed to find the answer";
     match (args.day, args.part) {
-        (1, 1) => day_1::solve_part_1().expect("Failed to find the answer"),
-        (1, 2) => day_1::solve_part_2().expect("Failed to find the answer"),
-        (2, 1) => day_2::solve_part_1().expect("Failed_to_find the answer"),
-        (2, 2) => day_2::solve_part_2().expect("Failed_to_find the answer"),
-        (3, 1) => day_3::solve_part_1().expect("Failed_to_find the answer"),
-        (3, 2) => day_3::solve_part_2().expect("Failed_to_find the answer"),
+        (1, 1) => day_1::solve_part_1().expect(FAILURE_TEXT),
+        (1, 2) => day_1::solve_part_2().expect(FAILURE_TEXT),
+        (2, 1) => day_2::solve_part_1().expect(FAILURE_TEXT),
+        (2, 2) => day_2::solve_part_2().expect(FAILURE_TEXT),
+        (3, 1) => day_3::solve_part_1().expect(FAILURE_TEXT),
+        (3, 2) => day_3::solve_part_2().expect(FAILURE_TEXT),
+        (4, 1) => day_4::solve_part_1().expect(FAILURE_TEXT),
+        (4, 2) => day_4::solve_part_1().expect(FAILURE_TEXT),
         (_, _) => unimplemented!("This day no work yet, brah."),
     };
 }

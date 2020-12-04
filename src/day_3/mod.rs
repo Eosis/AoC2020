@@ -14,11 +14,11 @@ pub fn solve_part_2() -> Result<(), ()> {
 
 fn parse_input(input: &str) -> Vec<Vec<char>> {
     let width = input.split('\n').next().unwrap().len();
-    let mut map: Vec<Vec<_>> = vec![vec![]; width];
+    let mut slope: Vec<Vec<_>> = vec![vec![]; width];
     for (i, c) in input.chars().filter(|c| *c != '\n').enumerate() {
-        map[i % width].push(c);
+        slope[i % width].push(c);
     }
-    map
+    slope
 }
 
 fn part_1(input: Vec<Vec<char>>) -> usize {
@@ -34,18 +34,12 @@ fn part_2(input: Vec<Vec<char>>) -> usize {
 }
 
 fn work_out(input: Vec<Vec<char>>, down: usize, right: usize) -> usize {
-    let mut columns = input.iter().cycle();
-    let col_ref = &mut columns;
+    let mut columns = input.iter().cycle().step_by(right).skip(1);
     let range = 0..(input[0].len());
-    let _: Vec<_> = col_ref.take(right).collect();
     range
-        .skip(down)
         .step_by(down)
-        .map(|i| {
-            let c = col_ref.next().unwrap()[i];
-            let _: Vec<_> = col_ref.take(right - 1).collect();
-            c
-        })
+        .skip(1)
+        .map(|i| (&mut columns).next().unwrap()[i])
         .filter(|c| *c == '#')
         .count()
 }
@@ -63,6 +57,7 @@ mod tests {
         let input = read_test_input();
         assert_eq!(part_1(input), 7);
     }
+
     #[test]
     fn test_part_2() {
         let input = read_test_input();
