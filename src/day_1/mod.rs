@@ -2,10 +2,7 @@ use std::fs;
 
 fn get_vals() -> Vec<i32> {
     let input = fs::read_to_string("./inputs/day1.txt").unwrap();
-    input
-        .split_whitespace()
-        .filter_map(|s| s.parse().ok())
-        .collect()
+    input.split_whitespace().filter_map(|s| s.parse().ok()).collect()
 }
 
 pub fn solve_part_1() -> Result<(), ()> {
@@ -68,10 +65,7 @@ mod tests {
 
     #[test]
     fn test_part_two_combo() {
-        assert_eq!(
-            combinations_summing_to_n(&VALS, 3, 2020).unwrap(),
-            241861950
-        )
+        assert_eq!(combinations_summing_to_n(&VALS, 3, 2020).unwrap(), 241861950)
     }
 
     #[test]

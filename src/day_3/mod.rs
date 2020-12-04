@@ -25,10 +25,7 @@ fn part_1(input: Vec<Vec<char>>) -> usize {
     original(input, 1, 3)
 }
 
-fn part_2(
-    input: Vec<Vec<char>>,
-    work_out: &dyn Fn(Vec<Vec<char>>, usize, usize) -> usize,
-) -> usize {
+fn part_2(input: Vec<Vec<char>>, work_out: &dyn Fn(Vec<Vec<char>>, usize, usize) -> usize) -> usize {
     [(1, 1), (1, 3), (1, 5), (1, 7), (2, 1)]
         .iter()
         .copied()

@@ -238,9 +238,7 @@ mod tests {
     #[test]
     fn check_valid_passports() {
         assert_eq!(
-            read_test_input("test_inputs/passports/valid_passports")
-                .iter()
-                .count(),
+            read_test_input("test_inputs/passports/valid_passports").iter().count(),
             4
         );
     }
