@@ -8,7 +8,7 @@ pub fn solve_part_1() -> Result<(), ()> {
 
 pub fn solve_part_2() -> Result<(), ()> {
     let input = parse_input(&fs::read_to_string("inputs/day3.txt").unwrap());
-    println!("Solution: {}", part_2(input));
+    println!("Solution: {}", part_2(input, &original));
     Ok(())
 }
 
@@ -22,10 +22,13 @@ fn parse_input(input: &str) -> Vec<Vec<char>> {
 }
 
 fn part_1(input: Vec<Vec<char>>) -> usize {
-    work_out(input, 1, 3)
+    original(input, 1, 3)
 }
 
-fn part_2(input: Vec<Vec<char>>) -> usize {
+fn part_2(
+    input: Vec<Vec<char>>,
+    work_out: &dyn Fn(Vec<Vec<char>>, usize, usize) -> usize,
+) -> usize {
     [(1, 1), (1, 3), (1, 5), (1, 7), (2, 1)]
         .iter()
         .copied()
@@ -33,7 +36,7 @@ fn part_2(input: Vec<Vec<char>>) -> usize {
         .product::<usize>()
 }
 
-fn work_out(input: Vec<Vec<char>>, down: usize, right: usize) -> usize {
+fn original(input: Vec<Vec<char>>, down: usize, right: usize) -> usize {
     let mut columns = input.iter().cycle().step_by(right).skip(1);
     let range = 0..(input[0].len());
     range
@@ -52,6 +55,15 @@ mod tests {
         parse_input(&fs::read_to_string("test_inputs/day3").unwrap())
     }
 
+    fn ranges(input: Vec<Vec<char>>, down: usize, right: usize) -> usize {
+        let height_iter = (0..input[0].len()).step_by(down).skip(1);
+        let width_iter = (0..input.len()).cycle().step_by(right).skip(1);
+        height_iter
+            .zip(width_iter)
+            .filter(|(y, x)| input[*x][*y] == '#')
+            .count()
+    }
+
     #[test]
     fn test_part_1() {
         let input = read_test_input();
@@ -59,8 +71,14 @@ mod tests {
     }
 
     #[test]
-    fn test_part_2() {
+    fn test_part_2_orig() {
         let input = read_test_input();
-        assert_eq!(part_2(input), 336);
+        assert_eq!(part_2(input, &original), 336);
+    }
+
+    #[test]
+    fn test_part_2_nouvelle() {
+        let input = read_test_input();
+        assert_eq!(part_2(input, &ranges), 336);
     }
 }
