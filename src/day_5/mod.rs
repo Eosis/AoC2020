@@ -21,8 +21,8 @@ pub fn solve_part_2() -> Result<(), ()> {
     let result = seats
         .iter()
         .tuple_windows()
-        .find(|(first, second)| first.to_u32() + 1 != second.to_u32())
-        .map(|(first, _)| Seat::from_u32(first.to_u32() + 1).generate_id())
+        .find(|(first, second)| first.generate_id() + 1 != second.generate_id())
+        .map(|(first, _)| Seat::from_id(first.generate_id() + 1).generate_id())
         .unwrap();
     println!("{}", result);
     Ok(())
@@ -53,14 +53,10 @@ impl Seat {
     }
 
     fn generate_id(&self) -> u32 {
-        self.column * 8 + self.row
-    }
-
-    fn to_u32(&self) -> u32 {
         self.column << 3 | self.row
     }
 
-    fn from_u32(num: u32) -> Seat {
+    fn from_id(num: u32) -> Seat {
         Seat {
             column: num >> 3,
             row: num & 0b111,
