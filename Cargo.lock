@@ -21,6 +21,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "argh",
+ "bit-vec",
  "itertools",
  "lazy_static",
  "regex",
@@ -54,6 +55,12 @@ name = "argh_shared"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "781f336cc9826dbaddb9754cb5db61e64cab4f69668bd19dcc4a0394a86f4cb1"
+
+[[package]]
+name = "bit-vec"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
 
 [[package]]
 name = "either"
