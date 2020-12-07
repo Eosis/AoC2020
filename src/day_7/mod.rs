@@ -19,7 +19,7 @@ fn bags_from_contains_description(contains_description: &str) -> Vec<(i32, Bag)>
         contains_description
             .split(',')
             .map(|item| {
-                let mut iter = item.trim_end_matches('.').split_whitespace();
+                let mut iter = item.split_whitespace();
                 let count = iter.next().unwrap();
                 let description = iter.take(2).join(" ");
                 (
@@ -61,7 +61,6 @@ fn expand_until_or_fail(bag: &Bag, seeking: &str, bag_map: &HashMap<String, Bag>
     }
 }
 
-// 185 is the correct answer for mich.
 pub fn solve_part_1() -> Result<(), ()> {
     let bags = parse_input(&fs::read_to_string("./inputs/day7.txt").unwrap());
     let bag_map = hashmap_from_list(bags);
@@ -109,16 +108,13 @@ fn hashmap_from_list(bags: Vec<Bag>) -> HashMap<String, Bag> {
 }
 
 fn count_bags_contained(bag: &Bag, bag_map: &HashMap<String, Bag>) -> usize {
-    let here: usize = bag.held.iter().map(|(i, _)| *i as usize).sum();
-    let there: usize = bag
-        .held
+    bag.held
         .iter()
         .map(|(i, bag)| {
             let bag = bag_map.get(&bag.description).unwrap();
-            *i as usize * count_bags_contained(bag, bag_map)
+            *i as usize + *i as usize * count_bags_contained(bag, bag_map)
         })
-        .sum();
-    here + there
+        .sum()
 }
 
 #[cfg(test)]
