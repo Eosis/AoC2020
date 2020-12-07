@@ -51,10 +51,27 @@ fn parse_input(input: &str) -> Vec<Bag> {
     input.split('\n').map(line_to_bag).collect()
 }
 
+fn expand_until_or_fail(bag: &Bag, seeking: &str, bag_map: &HashMap<String, Bag>) -> bool {
+    if bag.held.iter().any(|(_, bag)| bag.description == seeking) {
+        true
+    } else {
+        bag.held
+            .iter()
+            .any(|(_, bag)| expand_until_or_fail(bag_map.get(&bag.description).unwrap(), seeking, &bag_map))
+    }
+}
+
+// 185 is the correct answer for mich.
 pub fn solve_part_1() -> Result<(), ()> {
     let bags = parse_input(&fs::read_to_string("./inputs/day7.txt").unwrap());
-    let containers = determine_containers(&bags, "shiny gold");
-    println!("{}", containers.iter().unique().count());
+    let bag_map = hashmap_from_list(bags);
+    println!(
+        "{}",
+        bag_map
+            .iter()
+            .filter(|(_, v)| expand_until_or_fail(v, "shiny gold", &bag_map))
+            .count()
+    );
     Ok(())
 }
 
@@ -72,6 +89,7 @@ fn bags_that_hold_this(bags: &[Bag], description: &str) -> Vec<Bag> {
         .collect()
 }
 
+#[allow(dead_code)]
 fn determine_containers(bags: &[Bag], description: &str) -> Vec<String> {
     let holding_this = bags_that_hold_this(bags, description);
     if !holding_this.is_empty() {
