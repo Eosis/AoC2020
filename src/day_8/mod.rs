@@ -49,20 +49,7 @@ fn run_part_1(program: &[Instruction]) -> i32 {
     let mut acc = 0;
     while !visited.get(pc.try_into().unwrap()).unwrap() {
         visited.set(pc.try_into().unwrap(), true);
-        match program[pc as usize] {
-            Instruction { op: Operation::Nop, .. } => pc += 1,
-            Instruction {
-                op: Operation::Jmp,
-                number,
-            } => pc += number,
-            Instruction {
-                op: Operation::Acc,
-                number,
-            } => {
-                pc += 1;
-                acc += number;
-            }
-        }
+        execute_instruction(program, &mut pc, &mut acc);
     }
     acc
 }
@@ -84,26 +71,30 @@ fn swap_instruction(instruction: Instruction) -> Instruction {
     }
 }
 
+fn execute_instruction(program: &[Instruction], pc: &mut i32, acc: &mut i32) {
+    match program[*pc as usize] {
+        Instruction { op: Operation::Nop, .. } => *pc += 1,
+        Instruction {
+            op: Operation::Jmp,
+            number,
+        } => *pc += number,
+        Instruction {
+            op: Operation::Acc,
+            number,
+        } => {
+            *pc += 1;
+            *acc += number;
+        }
+    }
+}
+
 fn test_execution(program: &[Instruction]) -> Option<i32> {
     let mut visited = BitVec::from_elem(program.len(), false);
     let mut pc: i32 = 0;
     let mut acc = 0;
     while !visited.get(pc.try_into().unwrap()).unwrap() {
         visited.set(pc.try_into().unwrap(), true);
-        match program[pc as usize] {
-            Instruction { op: Operation::Nop, .. } => pc += 1,
-            Instruction {
-                op: Operation::Jmp,
-                number,
-            } => pc += number,
-            Instruction {
-                op: Operation::Acc,
-                number,
-            } => {
-                pc += 1;
-                acc += number;
-            }
-        }
+        execute_instruction(program, &mut pc, &mut acc);
         if pc == program.len() as i32 {
             return Some(acc);
         }
