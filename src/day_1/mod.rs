@@ -1,3 +1,4 @@
+use num::Integer;
 use std::fs;
 
 fn get_vals() -> Vec<i32> {
@@ -44,19 +45,25 @@ fn part_two(vals: &[i32]) -> Option<i32> {
     None
 }
 
+use itertools::Itertools;
+use std::iter::{Product, Sum};
+
+pub fn combinations_summing_to_n<T: Copy + Integer + Sum<T> + Product<T>>(
+    vals: &[T],
+    take: usize,
+    target: T,
+) -> Option<T> {
+    vals.iter()
+        .copied()
+        .combinations(take)
+        .find(|combo| combo.iter().copied().sum::<T>() == target)
+        .map(|i| i.iter().copied().product())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::Itertools;
     const VALS: [i32; 6] = [1721, 979, 366, 299, 675, 1456];
-
-    fn combinations_summing_to_n(vals: &[i32], take: usize, target: i32) -> Option<i32> {
-        vals.iter()
-            .copied()
-            .combinations(take)
-            .find(|combo| combo.iter().sum::<i32>() == target)
-            .map(|i| i.iter().product())
-    }
 
     #[test]
     fn test_part_one_combo() {
