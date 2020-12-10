@@ -46,18 +46,18 @@ fn part_two(vals: &[i32]) -> Option<i32> {
 }
 
 use itertools::Itertools;
-use std::iter::{Product, Sum};
+use std::ops::{Add, Mul};
 
-pub fn combinations_summing_to_n<T: Copy + Integer + Sum<T> + Product<T>>(
-    vals: &[T],
+pub fn combinations_summing_to_n<'a, T: 'a + Copy + Integer + Add + Mul>(
+    vals: &'a [T],
     take: usize,
     target: T,
 ) -> Option<T> {
     vals.iter()
         .copied()
         .combinations(take)
-        .find(|combo| combo.iter().copied().sum::<T>() == target)
-        .map(|i| i.iter().copied().product())
+        .find(|combo| combo.iter().fold(T::zero(), |acc, i| acc + *i) == target)
+        .map(|i| i.iter().fold(T::one(), |acc, i| acc * *i))
 }
 
 #[cfg(test)]

@@ -1,3 +1,5 @@
+use itertools::Itertools;
+use itertools::MinMaxResult::MinMax;
 use std::fs;
 
 fn parse_input(input: &str) -> Vec<usize> {
@@ -31,13 +33,20 @@ fn part_2(items: &[usize], target: usize) -> usize {
         if let Some(x) = items
             .windows(window_size)
             .find(|window| window.iter().sum::<usize>() == target)
-            .map(|window| window.iter().min().unwrap() + window.iter().max().unwrap())
+            .and_then(|window| {
+                if let MinMax(min, max) = window.iter().minmax() {
+                    Some(min + max)
+                } else {
+                    None
+                }
+            })
         {
             return x;
         }
     }
     panic!("Didn't find any!");
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
