@@ -54,7 +54,6 @@ impl<'a> Iterator for MySlicesIterator<'a> {
 }
 
 fn ways(items: &[u32]) -> usize {
-    //println!("Called on {:?}", items);
     let initial = items[0];
     let next_items: Vec<(usize, u32)> = items[0..]
         .iter()
