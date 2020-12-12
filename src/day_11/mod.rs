@@ -305,6 +305,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn just_count() {
         let input = parse_input(&fs::read_to_string("test_inputs/day11/2").unwrap());
         let row_length = input[0].len();
@@ -319,6 +320,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn just_iter_once() {
         let mut input = parse_input(&fs::read_to_string("test_inputs/day11/1").unwrap());
         for _ in 0..4 {
@@ -346,6 +348,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_iteration_part_2() {
         let mut input = parse_input(&fs::read_to_string("test_inputs/day11/1").unwrap());
         for _ in 0..2 {
