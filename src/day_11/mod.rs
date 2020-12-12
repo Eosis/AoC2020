@@ -26,24 +26,6 @@ fn parse_input(input: &str) -> Vec<Vec<Tile>> {
         .collect()
 }
 
-//    const row_max = board.len() - 1;
-//     const col_max = board[0].len() - 1;
-//
-//     let iter_y = match (y, x) {
-//         (0, x) => (0..=1),
-//         (row_max, x) => (-1i32..=0),
-//         (y, x) => (-1i32..=1),
-//     };
-//     let iter_x = match (y, x) {
-//         (y, 0) => (0..=1),
-//         (y, col_max) => (-1i32..=0),
-//         (y, x) => (-1i32..=1),
-//     };
-
-// empty seat-> no adjacent  -> occupied
-// occupied -> >= 4 adjacent occupied -> empty
-// else -> Same.
-
 fn new_tile_part_1((y, x): (usize, usize), board: &[Vec<Tile>]) -> Tile {
     match board[y][x] {
         Tile::Empty => {

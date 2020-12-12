@@ -64,30 +64,8 @@ fn ways(items: &[u32]) -> usize {
         .filter(|(_, value)| *value <= 3u32)
         .collect();
 
-    // now have either:
-    // [0, 1, 2, 3]
-    // [0, 2, 3]
-    // [0, 1, 3]
-    // [0, 3]
     match next_items.len() {
-        4 => {
-            // [0, 1] * [1 .. ]
-            ways(&items[1..])
-           // [0, 2] * [2 .. ]
-           + ways(&items[2..])
-           // [0, 3] * [3 ..
-           + ways(&items[3..])
-        }
-        3 => {
-            // [0, 2] * [2 .. ]
-            ways(&items[1..])
-           // [0, 3] * [3 .. ]
-            + ways(&items[2..])
-        }
-        2 => {
-            // [0, 3] * [3 .. ]
-            ways(&items[1..])
-        }
+        2..=4 => (1..next_items.len()).map(|i| ways(&items[i..])).sum::<usize>(),
         1 => 1,
         _ => panic!("Wrong slicin'"),
     }
@@ -153,5 +131,11 @@ mod tests {
         assert_eq!(iter.next().unwrap(), vec![6, 7, 8, 9].as_slice());
         assert_eq!(iter.next().unwrap(), vec![12].as_slice());
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_actual_part_2_answer() {
+        let items = parse_input(&fs::read_to_string("./inputs/day10.txt").unwrap());
+        assert_eq!(part_2(items), 1_511_207_993_344);
     }
 }
