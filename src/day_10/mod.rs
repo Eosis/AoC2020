@@ -138,4 +138,20 @@ mod tests {
         let items = parse_input(&fs::read_to_string("./inputs/day10.txt").unwrap());
         assert_eq!(part_2(items), 1_511_207_993_344);
     }
+
+    #[test]
+    fn test_example() {
+        let items = [1, 2, 3, 4, 5, 6];
+        println!("{}", part_2(items.to_vec()))
+    }
+
+    #[test]
+    fn print_diffs() {
+        let mut input = parse_input(&fs::read_to_string("./inputs/day10.txt").unwrap());
+        input.sort_unstable();
+        let res: Vec<_> = input.windows(2).map(|window| window[1] - window[0]).collect();
+        for item in res {
+            println!("{}", item);
+        }
+    }
 }
