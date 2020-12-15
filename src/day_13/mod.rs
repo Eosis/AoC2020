@@ -1,13 +1,13 @@
 use std::fs;
 
 fn parse_input(input: &str) -> Problem {
-    let current_time = input.split("\n").next().unwrap().parse().unwrap();
+    let current_time = input.split('\n').next().unwrap().parse().unwrap();
     let available_freqs = input
-        .split("\n")
+        .split('\n')
         .nth(1)
         .map(|value_str| {
             value_str
-                .split(",")
+                .split(',')
                 .map(|freq| if freq == "x" { 0 } else { freq.parse().unwrap() })
                 .collect()
         })
@@ -47,7 +47,7 @@ fn get_modulo_expectation((place, value): (usize, &u64)) -> (u64, u64) {
         ((*value - place) % *value, *value)
     } else {
         let mut place = place;
-        let mut value = *value;
+        let value = *value;
         while place > value {
             place -= value;
         }
@@ -59,7 +59,7 @@ fn make_constraints(buses: &[u64]) -> Vec<(u64, u64)> {
     buses
         .iter()
         .enumerate()
-        .filter(|(i, n)| **n != 0)
+        .filter(|(_, n)| **n != 0)
         .map(get_modulo_expectation)
         .collect()
 }
@@ -86,7 +86,7 @@ fn sieving_search(mut list: Vec<(u64, u64)>) -> u64 {
             current_number += current_increment;
             if current_number % modulo == expected {
                 found = true;
-                current_increment = current_increment * modulo;
+                current_increment *= modulo;
             }
         }
     }
@@ -106,7 +106,7 @@ mod tests {
 
     fn print_useful(factor: u64, divisor: u64) {
         println!("Table for {} % {}", factor, divisor);
-        for i in (1..=divisor) {
+        for i in 1..=divisor {
             println!("({}, {}, {})", i, factor * i, (factor * i) % divisor);
         }
     }

@@ -1,7 +1,6 @@
-use std::fs;
 use anyhow::Result;
-use regex::internal::Inst;
 use std::collections::BTreeMap;
+use std::fs;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Instruction {
@@ -12,44 +11,51 @@ enum Instruction {
 fn line_to_instruction(line: &str) -> Instruction {
     match &line[0..2] {
         "ma" => Instruction::Mask(String::from(line.split_whitespace().last().unwrap())),
-        "me" => Instruction::MemorySet(line.split(|c| c == '[' || c == ']').nth(1).unwrap().parse().unwrap(), line.split_whitespace().last().unwrap().parse().unwrap()),
+        "me" => Instruction::MemorySet(
+            line.split(|c| c == '[' || c == ']').nth(1).unwrap().parse().unwrap(),
+            line.split_whitespace().last().unwrap().parse().unwrap(),
+        ),
         _ => panic!("Malformed input"),
     }
 }
 
 fn parse_input(input: &str) -> Vec<Instruction> {
-    input.split('\n')
-        .map(line_to_instruction)
-        .collect()
+    input.split('\n').map(line_to_instruction).collect()
 }
 
 pub fn solve_part_1() -> Result<(), ()> {
     let input = parse_input(&fs::read_to_string("./inputs/day14.txt").unwrap());
-    println!( "{}", part_1(input));
+    println!("{}", part_1(input));
     Ok(())
 }
 
 pub fn solve_part_2() -> Result<(), ()> {
     let input = parse_input(&fs::read_to_string("./inputs/day14.txt").unwrap());
-    println!( "{}", part_2(input));
+    println!("{}", part_2(input));
     Ok(())
 }
 
 fn part_1(input: Vec<Instruction>) -> u64 {
-    let computer = Computer { current_mask: "X".to_string(), memory_map: BTreeMap::new() };
+    let computer = Computer {
+        current_mask: "X".to_string(),
+        memory_map: BTreeMap::new(),
+    };
     let computer = run_program_on_computer(computer, input);
     computer.memory_map.iter().map(|(_, v)| v).sum()
 }
 
 fn part_2(input: Vec<Instruction>) -> u64 {
-    let computer = Computer { current_mask: "X".to_string(), memory_map: BTreeMap::new() };
+    let computer = Computer {
+        current_mask: "X".to_string(),
+        memory_map: BTreeMap::new(),
+    };
     let computer = run_program_on_computer_version_2(computer, input);
     computer.memory_map.iter().map(|(_, v)| v).sum()
 }
 
 fn apply_bitmask(value: u64, mask: &str) -> u64 {
-    let or_with : String = mask.chars().map(|c| if c == 'X' { '0' } else { c } ).collect();
-    let and_with: String = mask.chars().map(|c| if c == 'X' { '1' } else { c } ).collect();
+    let or_with: String = mask.chars().map(|c| if c == 'X' { '0' } else { c }).collect();
+    let and_with: String = mask.chars().map(|c| if c == 'X' { '1' } else { c }).collect();
     let or_with = u64::from_str_radix(&or_with, 2).unwrap();
     let and_with = u64::from_str_radix(&and_with, 2).unwrap();
     (value & and_with) | or_with
@@ -67,18 +73,23 @@ struct MemoryDecoder {
 }
 
 fn mask_to_decoder(mask: &str) -> MemoryDecoder {
-    let and_with: String = mask.chars().map(|c| if c == 'X' { '1' } else { '0' } ).collect();
+    let and_with: String = mask.chars().map(|c| if c == 'X' { '1' } else { '0' }).collect();
     let and_with = !u64::from_str_radix(&and_with, 2).unwrap();
-    let or_with = mask.chars().map(|c| if c == 'X' { '0' } else { c } ).collect::<String>();
+    let or_with = mask.chars().map(|c| if c == 'X' { '0' } else { c }).collect::<String>();
     let or_with = u64::from_str_radix(&or_with, 2).unwrap();
-    let floaters = mask.chars().rev().enumerate().filter(|(i, c)| *c == 'X').map((|(i, _)| i)).collect();
+    let floaters = mask
+        .chars()
+        .rev()
+        .enumerate()
+        .filter(|(_, c)| *c == 'X')
+        .map(|(i, _)| i)
+        .collect();
     MemoryDecoder {
         and_mask: and_with,
         or_mask: or_with,
-        floaters
+        floaters,
     }
 }
-
 
 // 0bx0x001
 // -> 0b000001
@@ -104,13 +115,14 @@ fn addresses_decoded(address: u64, decoder: MemoryDecoder) -> Vec<u64> {
     masks_from_stretched_bits(base, decoder.floaters)
 }
 
-
 fn run_program_on_computer(mut computer: Computer, program: Vec<Instruction>) -> Computer {
     for instruction in program.iter() {
         match instruction {
             Instruction::Mask(mask) => computer.current_mask = mask.clone(),
             Instruction::MemorySet(location, value) => {
-                computer.memory_map.insert(*location, apply_bitmask(*value, &computer.current_mask));
+                computer
+                    .memory_map
+                    .insert(*location, apply_bitmask(*value, &computer.current_mask));
             }
         }
     }
@@ -132,7 +144,6 @@ fn run_program_on_computer_version_2(mut computer: Computer, program: Vec<Instru
     }
     computer
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -179,29 +190,11 @@ mod tests {
 
     #[test]
     fn test_masks_from_stretched_bits() {
-        let correct = vec![
-            0b0000,
-            0b0001,
-            0b0010,
-            0b0011,
-            0b1000,
-            0b1001,
-            0b1010,
-            0b1011,
-        ];
+        let correct = vec![0b0000, 0b0001, 0b0010, 0b0011, 0b1000, 0b1001, 0b1010, 0b1011];
         let result = masks_from_stretched_bits(0x0, vec![0, 1, 3]);
         assert_eq!(result, correct);
 
-        let correct = vec![
-            0b0100,
-            0b0101,
-            0b0110,
-            0b0111,
-            0b1100,
-            0b1101,
-            0b1110,
-            0b1111,
-        ];
+        let correct = vec![0b0100, 0b0101, 0b0110, 0b0111, 0b1100, 0b1101, 0b1110, 0b1111];
         let result = masks_from_stretched_bits(0b0100, vec![0, 1, 3]);
         assert_eq!(result, correct);
     }
