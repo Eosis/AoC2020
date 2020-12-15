@@ -27,8 +27,8 @@ struct Args {
     /// part of the puzzle to do.
     part: usize,
 }
-
-fn main() {
+use anyhow::Result;
+fn main() -> Result<()> {
     let args: Args = argh::from_env();
     const FAILURE_TEXT: &str = "Failed to find the answer";
     match (args.day, args.part) {
@@ -64,4 +64,5 @@ fn main() {
         (15, 2) => day_15::solve_part_2().expect(FAILURE_TEXT),
         (_, _) => unimplemented!("This day no work yet, brah."),
     };
+    Ok(())
 }

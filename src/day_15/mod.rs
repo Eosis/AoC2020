@@ -1,21 +1,14 @@
 use anyhow::Result;
-use std::collections::VecDeque;
 use hashbrown::HashMap;
-use std::fs;
-
-fn parse_input(input: &str) -> Vec<u32> {
-    input.split(',').map(|x| x.parse().unwrap()).collect()
-}
+use std::collections::VecDeque;
 
 pub fn solve_part_1() -> Result<(), ()> {
-    let input = parse_input(&fs::read_to_string("./inputs/day15.txt").unwrap());
-    println!("{}", part_1(input));
+    println!("{}", part_1(vec![12, 20, 0, 6, 1, 17, 7]));
     Ok(())
 }
 
 pub fn solve_part_2() -> Result<(), ()> {
-    let input = parse_input(&fs::read_to_string("./inputs/day15.txt").unwrap());
-    println!("{}", part_2(input));
+    println!("{}", part_2(vec![12, 20, 0, 6, 1, 17, 7]));
     Ok(())
 }
 
@@ -72,7 +65,7 @@ fn add_or_append_to_key(locations_map: &mut ValuesToTurnsMap, key: u32, turn: us
 }
 
 fn find_nth_in_sequence_efficient(input: &[u32], n: usize) -> u32 {
-    let mut locations_map: ValuesToTurnsMap = ValuesToTurnsMap::with_capacity(100_000);
+    let mut locations_map: ValuesToTurnsMap = ValuesToTurnsMap::new();
     for (turn, value) in input.iter().enumerate() {
         locations_map.entry(*value).or_insert_with(|| {
             let mut value = VecDeque::with_capacity(2);
@@ -89,6 +82,7 @@ fn find_nth_in_sequence_efficient(input: &[u32], n: usize) -> u32 {
             add_or_append_to_key(&mut locations_map, 0, turn)
         }
     }
+    println!("Ended with {} entries in the map", locations_map.len());
     looking_for
 }
 
@@ -97,8 +91,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_simple() {
-        let input = "0,3,6";
-        let input = parse_input(input);
+        let input = vec![0, 3, 6];
         assert_eq!(find_nth_in_sequence(&input, 4), 0);
         assert_eq!(find_nth_in_sequence(&input, 5), 3);
         assert_eq!(find_nth_in_sequence(&input, 6), 3);
@@ -111,8 +104,7 @@ mod tests {
 
     #[test]
     fn test_efficient() {
-        let input = "0,3,6";
-        let input = parse_input(input);
+        let input = vec![0, 3, 6];
         assert_eq!(find_nth_in_sequence_efficient(&input, 4), 0);
         assert_eq!(find_nth_in_sequence_efficient(&input, 5), 3);
         assert_eq!(find_nth_in_sequence_efficient(&input, 6), 3);
@@ -126,8 +118,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_long_example() {
-        let input = "0,3,6";
-        let input = parse_input(input);
+        let input = vec![0, 3, 6];
         assert_eq!(find_nth_in_sequence_efficient(&input, 30000000), 175594);
     }
 }
