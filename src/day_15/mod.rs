@@ -1,8 +1,9 @@
 use anyhow::Result;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
+use hashbrown::HashMap;
 use std::fs;
 
-fn parse_input(input: &str) -> Vec<u64> {
+fn parse_input(input: &str) -> Vec<u32> {
     input.split(',').map(|x| x.parse().unwrap()).collect()
 }
 
@@ -18,15 +19,15 @@ pub fn solve_part_2() -> Result<(), ()> {
     Ok(())
 }
 
-fn part_1(input: Vec<u64>) -> u64 {
+fn part_1(input: Vec<u32>) -> u32 {
     find_nth_in_sequence(&input, 2020)
 }
 
-fn part_2(input: Vec<u64>) -> u64 {
+fn part_2(input: Vec<u32>) -> u32 {
     find_nth_in_sequence_efficient(&input, 30000000)
 }
 
-fn find_nth_in_sequence(input: &[u64], n: usize) -> u64 {
+fn find_nth_in_sequence(input: &[u32], n: usize) -> u32 {
     let mut sequence = input.to_vec();
     let starting_turn = input.len() + 1;
 
@@ -39,14 +40,13 @@ fn find_nth_in_sequence(input: &[u64], n: usize) -> u64 {
             .max_by_key(|(i, _)| *i)
             .map(|(most_recent_idx, _)| (turn - 1 - (most_recent_idx + 1)))
             .unwrap_or(0);
-        sequence.push(to_push as u64);
-        // if turn % 100_000 == 0 { println!("Currently on turn {}", turn) }
+        sequence.push(to_push as u32);
     }
     *sequence.last().unwrap()
 }
 
-type ValuesToTurnsMap = HashMap<u64, VecDeque<usize>>;
-fn handle_if_in_map(locations_map: &mut ValuesToTurnsMap, looking_for: u64, turn: usize) -> u64 {
+type ValuesToTurnsMap = HashMap<u32, VecDeque<usize>>;
+fn handle_if_in_map(locations_map: &mut ValuesToTurnsMap, looking_for: u32, turn: usize) -> u32 {
     let turn_list = locations_map.get_mut(&looking_for).unwrap();
 
     // This only occurs when it was the last value entered, so there is no previous occurrence
@@ -54,13 +54,13 @@ fn handle_if_in_map(locations_map: &mut ValuesToTurnsMap, looking_for: u64, turn
         (0, turn)
     } else {
         // if the list is of length > 1,  add or alter a key in the map with value (turn  - 1  - list[length-2])
-        let new_value = (turn - 1 - turn_list[0]) as u64;
+        let new_value = (turn - 1 - turn_list[0]) as u32;
         (new_value, turn)
     };
     add_or_append_to_key(locations_map, to_insert.0, to_insert.1)
 }
 
-fn add_or_append_to_key(locations_map: &mut ValuesToTurnsMap, key: u64, turn: usize) -> u64 {
+fn add_or_append_to_key(locations_map: &mut ValuesToTurnsMap, key: u32, turn: usize) -> u32 {
     let current = locations_map.entry(key).or_insert_with(|| VecDeque::with_capacity(2));
     if current.len() < 2 {
         current.push_back(turn);
@@ -71,8 +71,8 @@ fn add_or_append_to_key(locations_map: &mut ValuesToTurnsMap, key: u64, turn: us
     key
 }
 
-fn find_nth_in_sequence_efficient(input: &[u64], n: usize) -> u64 {
-    let mut locations_map: ValuesToTurnsMap = ValuesToTurnsMap::new();
+fn find_nth_in_sequence_efficient(input: &[u32], n: usize) -> u32 {
+    let mut locations_map: ValuesToTurnsMap = ValuesToTurnsMap::with_capacity(100_000);
     for (turn, value) in input.iter().enumerate() {
         locations_map.entry(*value).or_insert_with(|| {
             let mut value = VecDeque::with_capacity(2);
