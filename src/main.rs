@@ -6,6 +6,7 @@ mod day_13;
 mod day_14;
 mod day_15;
 mod day_16;
+mod day_17;
 mod day_2;
 mod day_3;
 mod day_4;
@@ -14,7 +15,6 @@ mod day_6;
 mod day_7;
 mod day_8;
 mod day_9;
-mod day_17;
 
 use argh::FromArgs;
 

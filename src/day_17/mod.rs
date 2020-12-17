@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
-use std::fs;
 use std::collections::VecDeque;
+use std::fs;
 use std::ops::Add;
 
 pub fn solve_part_1() -> Result<(), ()> {
@@ -28,8 +28,11 @@ fn parse_input(input: &str) -> Board {
     // # z, y, x addressing
     let mut w: HyperCube = VecDeque::new();
     let mut z: Cube = VecDeque::new();
-    let first_layer = input.split('\n').map(|row| row.chars().map(|c| c == '#').collect::<VecDeque<bool>>()).collect::<VecDeque<VecDeque<bool>>>();
-    let y_offset =  (first_layer.len() / 2) as i32;
+    let first_layer = input
+        .split('\n')
+        .map(|row| row.chars().map(|c| c == '#').collect::<VecDeque<bool>>())
+        .collect::<VecDeque<VecDeque<bool>>>();
+    let y_offset = (first_layer.len() / 2) as i32;
     let x_offset = (first_layer[0].len() / 2) as i32;
     z.push_front(first_layer);
     w.push_front(z);
@@ -74,7 +77,8 @@ impl Board {
         if (w + self.w_offset) < 0 || (z + self.z_offset) < 0 || (y + self.y_offset) < 0 || (x + self.x_offset) < 0 {
             None
         } else {
-            self.cubes.get((w + self.w_offset) as usize)
+            self.cubes
+                .get((w + self.w_offset) as usize)
                 .and_then(|cube| cube.get((z + self.z_offset) as usize))
                 .and_then(|layer| layer.get((y + self.y_offset) as usize))
                 .and_then(|row| row.get((x + self.x_offset) as usize).copied())
@@ -114,7 +118,8 @@ impl Board {
             // println!("About to set something in the new board active: {:?}", (z, y, x));
             // self.print_layers();
         }
-        self.cubes[(w + self.w_offset) as usize][(z + self.z_offset) as usize][(y + self.y_offset) as usize][(x + self.x_offset) as usize] = active;
+        self.cubes[(w + self.w_offset) as usize][(z + self.z_offset) as usize][(y + self.y_offset) as usize]
+            [(x + self.x_offset) as usize] = active;
         if active {
             // println!("After Setting Active: {:?}", (z, y, x));
             // self.print_layers();
@@ -126,10 +131,11 @@ impl Board {
         let x_len = self.cubes[0][0][0].len();
         let new_cube: Cube = (0..z_len)
             .map(|_| -> Layer {
-                (0..y_len).map(|_| -> Row {
-                    (0..x_len).map(|_| false).collect()
-                }).collect()
-            }).collect();
+                (0..y_len)
+                    .map(|_| -> Row { (0..x_len).map(|_| false).collect() })
+                    .collect()
+            })
+            .collect();
         self.cubes.push_front(new_cube.clone());
         self.cubes.push_back(new_cube.clone());
         self.w_offset += 1
@@ -138,9 +144,9 @@ impl Board {
     fn expand_z(&mut self) {
         let y_len = self.cubes[0][0].len();
         let x_len = self.cubes[0][0][0].len();
-        let new_layer: Layer = (0..y_len).map(|_| -> Row {
-            (0..x_len).map(|_| false).collect()
-        }).collect();
+        let new_layer: Layer = (0..y_len)
+            .map(|_| -> Row { (0..x_len).map(|_| false).collect() })
+            .collect();
         for cube in self.cubes.iter_mut() {
             cube.push_front(new_layer.clone());
             cube.push_back(new_layer.clone());
@@ -173,7 +179,8 @@ impl Board {
     }
 
     fn count_active_neighbours(&self, point: Point) -> usize {
-        let result = self.offsets_to_check
+        let result = self
+            .offsets_to_check
             .iter()
             .map(|offset| *offset + point)
             .map(|neighbouring_point| self.get(neighbouring_point).unwrap_or(false))
@@ -215,12 +222,14 @@ impl Board {
     }
 
     fn count_total_active(&self) -> usize {
-        self.cubes.iter()
-            .flat_map(|cube|
-                cube.iter().flat_map(|layer|
-                    layer.iter().flat_map(|row|
-                        row.iter().copied())))
-            .filter(|x| *x).count()
+        self.cubes
+            .iter()
+            .flat_map(|cube| {
+                cube.iter()
+                    .flat_map(|layer| layer.iter().flat_map(|row| row.iter().copied()))
+            })
+            .filter(|x| *x)
+            .count()
     }
 
     // fn print_layers(&self) {
@@ -233,7 +242,11 @@ impl Board {
         println!("z = {}", z);
         for row in layer.iter() {
             for cube in row.iter() {
-                if *cube { print!("#") } else { print!{"."} }
+                if *cube {
+                    print!("#")
+                } else {
+                    print! {"."}
+                }
             }
             println!();
         }
@@ -245,14 +258,9 @@ fn get_points() -> Vec<Point> {
     // % 3 == 0 => -1, == % 3 - 1
     // % 3 == 1 => 0,
     // % 3 == 2 => 1,
-    (0..3i32.pow(4u32)).map (|i| {
-        (
-            ((i / 27) % 3) - 1,
-            ((i / 9) % 3 ) - 1,
-            ((i / 3) % 3) - 1,
-            i % 3 -1,
-        )
-    }).filter(|x| *x != (0, 0, 0, 0))
+    (0..3i32.pow(4u32))
+        .map(|i| (((i / 27) % 3) - 1, ((i / 9) % 3) - 1, ((i / 3) % 3) - 1, i % 3 - 1))
+        .filter(|x| *x != (0, 0, 0, 0))
         .map(|x| x.into())
         .collect()
 }
