@@ -66,7 +66,7 @@ fn main() -> Result<()> {
         (15, 2) => day_15::solve_part_2().expect(FAILURE_TEXT),
         (16, 1) => day_16::solve_part_1().expect(FAILURE_TEXT),
         (16, 2) => day_16::solve_part_2().expect(FAILURE_TEXT),
-        (17, 1) => day_17::solve_part_1().expect(FAILURE_TEXT),
+        (17, 1) => unimplemented!("This day no work yet, brah."),
         (17, 2) => day_17::solve_part_2().expect(FAILURE_TEXT),
         (_, _) => unimplemented!("This day no work yet, brah."),
     };

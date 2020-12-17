@@ -1,27 +1,28 @@
-use hashbrown::HashMap;
 use std::collections::VecDeque;
 use std::fs;
 use std::ops::Add;
 
+#[allow(dead_code)]
 pub fn solve_part_1() -> Result<(), ()> {
-    let input = parse_input(&fs::read_to_string("./inputs/day17.txt").unwrap());
-    println!("{}", part_1(input));
     Ok(())
 }
 
 pub fn solve_part_2() -> Result<(), ()> {
+    let input = parse_input(&fs::read_to_string("./inputs/day17.txt").unwrap());
+    println!("{}", part_2(input));
     Ok(())
 }
 
-fn part_1(mut board: Board) -> usize {
+#[allow(dead_code)]
+fn part_1(_: Board) -> usize {
+    0
+}
+
+fn part_2(mut board: Board) -> usize {
     for _ in 0..6 {
         board = board.iterate()
     }
     board.count_total_active()
-}
-
-fn part_2(board: Board) -> usize {
-    0
 }
 
 fn parse_input(input: &str) -> Board {
@@ -87,43 +88,19 @@ impl Board {
 
     fn set(&mut self, Point(w, z, y, x): Point, active: bool) {
         if w.abs() > self.w_offset {
-            // println!("Printing layer before expanding z");
-            // self.print_layers();
             self.expand_w();
-            // println!("After  expanding z");
-            // self.print_layers();
         }
         if z.abs() > self.z_offset {
-            // println!("Printing layer before expanding z");
-            // self.print_layers();
             self.expand_z();
-            // println!("After  expanding z");
-            // self.print_layers();
         }
         if y.abs() > self.y_offset {
-            // println!("Printing layer before expanding y");
-            // self.print_layers();
             self.expand_y();
-            // println!("Printing layer after expanding y");
-            // self.print_layers();
         }
         if x.abs() > self.x_offset {
-            // println!("Printing layer before expanding x");
-            // self.print_layers();
             self.expand_x();
-            // println!("Printing layer after expanding x");
-            // self.print_layers();
-        }
-        if active {
-            // println!("About to set something in the new board active: {:?}", (z, y, x));
-            // self.print_layers();
         }
         self.cubes[(w + self.w_offset) as usize][(z + self.z_offset) as usize][(y + self.y_offset) as usize]
             [(x + self.x_offset) as usize] = active;
-        if active {
-            // println!("After Setting Active: {:?}", (z, y, x));
-            // self.print_layers();
-        }
     }
     fn expand_w(&mut self) {
         let z_len = self.cubes[0].len();
@@ -137,7 +114,7 @@ impl Board {
             })
             .collect();
         self.cubes.push_front(new_cube.clone());
-        self.cubes.push_back(new_cube.clone());
+        self.cubes.push_back(new_cube);
         self.w_offset += 1
     }
 
@@ -186,7 +163,6 @@ impl Board {
             .map(|neighbouring_point| self.get(neighbouring_point).unwrap_or(false))
             .filter(|active| *active)
             .count();
-        // println!("{:?} had {} active neighbours", point, result);
         result
     }
 
@@ -194,7 +170,6 @@ impl Board {
     // If a cube is inactive but exactly 3 of its neighbors are active, the cube becomes active. Otherwise, the cube remains inactive.
     fn apply_rules(&self, point: Point) -> bool {
         let active = self.get(point).unwrap_or(false);
-        // println!("{:?} is {}", point, if active { "active" } else { "dead"} );
         let neighbour_count = self.count_active_neighbours(point);
         if active {
             (2..=3).contains(&neighbour_count)
@@ -216,8 +191,6 @@ impl Board {
                 }
             }
         }
-        //println!("Printing new board to return after iteration");
-        // new_board.print_layers();
         new_board
     }
 
@@ -237,7 +210,7 @@ impl Board {
     //         Board::print_layer(layer, z as i32 - self.z_offset);
     //     }
     // }
-
+    #[allow(dead_code)]
     fn print_layer(layer: &Layer, z: i32) {
         println!("z = {}", z);
         for row in layer.iter() {
