@@ -26,53 +26,69 @@ fn part_2(board: Board) -> usize {
 
 fn parse_input(input: &str) -> Board {
     // # z, y, x addressing
-    let mut z = VecDeque::new();
+    let mut w: HyperCube = VecDeque::new();
+    let mut z: Cube = VecDeque::new();
     let first_layer = input.split('\n').map(|row| row.chars().map(|c| c == '#').collect::<VecDeque<bool>>()).collect::<VecDeque<VecDeque<bool>>>();
+    let y_offset =  (first_layer.len() / 2) as i32;
+    let x_offset = (first_layer[0].len() / 2) as i32;
     z.push_front(first_layer);
-    let y_offset =  (z[0].len() / 2) as i32;
-    let x_offset = (z[0][0].len() / 2) as i32;
+    w.push_front(z);
     Board {
-        cubes: z,
+        cubes: w,
         x_offset,
         y_offset,
         z_offset: 0,
+        w_offset: 0,
         offsets_to_check: get_points(),
     }
 }
 
+type HyperCube = VecDeque<Cube>;
+type Cube = VecDeque<Layer>;
+type Layer = VecDeque<Row>;
+type Row = VecDeque<bool>;
 #[derive(Clone, Debug)]
 struct Board {
-    cubes: VecDeque<VecDeque<VecDeque<bool>>>,
+    cubes: HyperCube,
     x_offset: i32,
     y_offset: i32,
     z_offset: i32,
+    w_offset: i32,
     offsets_to_check: Vec<Point>,
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Point(i32, i32, i32);
+struct Point(i32, i32, i32, i32);
 
 impl Add for Point {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Self(self.0 + other.0, self.1 + other.1, self.2 + other.2)
+        Self(self.0 + other.0, self.1 + other.1, self.2 + other.2, self.3 + other.3)
     }
 }
 
 impl Board {
-    fn get(&self, Point(z, y, x): Point) -> Option<bool> {
+    fn get(&self, Point(w, z, y, x): Point) -> Option<bool> {
         // println!("When getting {:?}, I'm looking for ({}, {}, {})", Point(z, y, x),  z + self.z_offset, y + self.y_offset, x + self.x_offset);
-        if (z + self.z_offset) < 0 || (y + self.y_offset) < 0 || (x + self.x_offset) < 0 {
+        if (w + self.w_offset) < 0 || (z + self.z_offset) < 0 || (y + self.y_offset) < 0 || (x + self.x_offset) < 0 {
             None
         } else {
-            self.cubes.get((z + self.z_offset) as usize)
+            self.cubes.get((w + self.w_offset) as usize)
+                .and_then(|cube| cube.get((z + self.z_offset) as usize))
                 .and_then(|layer| layer.get((y + self.y_offset) as usize))
                 .and_then(|row| row.get((x + self.x_offset) as usize).copied())
         }
     }
 
-    fn set(&mut self, Point(z, y, x): Point, active: bool) {
+    fn set(&mut self, Point(w, z, y, x): Point, active: bool) {
+        if w.abs() > self.w_offset {
+            // println!("Printing layer before expanding z");
+            // self.print_layers();
+            self.expand_w();
+            // println!("After  expanding z");
+            // self.print_layers();
+        }
         if z.abs() > self.z_offset {
             // println!("Printing layer before expanding z");
             // self.print_layers();
@@ -98,43 +114,59 @@ impl Board {
             // println!("About to set something in the new board active: {:?}", (z, y, x));
             // self.print_layers();
         }
-        self.cubes[(z + self.z_offset) as usize][(y + self.y_offset) as usize][(x + self.x_offset) as usize] = active;
+        self.cubes[(w + self.w_offset) as usize][(z + self.z_offset) as usize][(y + self.y_offset) as usize][(x + self.x_offset) as usize] = active;
         if active {
             // println!("After Setting Active: {:?}", (z, y, x));
             // self.print_layers();
         }
     }
+    fn expand_w(&mut self) {
+        let z_len = self.cubes[0].len();
+        let y_len = self.cubes[0][0].len();
+        let x_len = self.cubes[0][0][0].len();
+        let new_cube: Cube = (0..z_len)
+            .map(|_| -> Layer {
+                (0..y_len).map(|_| -> Row {
+                    (0..x_len).map(|_| false).collect()
+                }).collect()
+            }).collect();
+        self.cubes.push_front(new_cube.clone());
+        self.cubes.push_back(new_cube.clone());
+        self.w_offset += 1
+    }
 
     fn expand_z(&mut self) {
-        let y_len = self.cubes[0].len();
-        let x_len = self.cubes[0][0].len();
-        let new_layer: VecDeque<VecDeque<bool>> = (0..y_len).map(|_| {
-            let mut row = VecDeque::new();
-            for i in 0..x_len {
-                row.push_front(false);
-            }
-            row
+        let y_len = self.cubes[0][0].len();
+        let x_len = self.cubes[0][0][0].len();
+        let new_layer: Layer = (0..y_len).map(|_| -> Row {
+            (0..x_len).map(|_| false).collect()
         }).collect();
-        self.cubes.push_front(new_layer.clone());
-        self.cubes.push_back(new_layer.clone());
+        for cube in self.cubes.iter_mut() {
+            cube.push_front(new_layer.clone());
+            cube.push_back(new_layer.clone());
+        }
         self.z_offset += 1
     }
 
     fn expand_y(&mut self) {
-        let x_len = self.cubes[0][0].len();
-        let new_row: VecDeque<bool> = (0..x_len).map(|_| false).collect();
-        for layer in self.cubes.iter_mut() {
-            layer.push_front(new_row.clone());
-            layer.push_back(new_row.clone());
+        let x_len = self.cubes[0][0][0].len();
+        let new_row: Row = (0..x_len).map(|_| false).collect();
+        for cube in self.cubes.iter_mut() {
+            for layer in cube.iter_mut() {
+                layer.push_front(new_row.clone());
+                layer.push_back(new_row.clone());
+            }
         }
         self.y_offset += 1
     }
 
     fn expand_x(&mut self) {
-        for layer in self.cubes.iter_mut() {
-            for row in layer.iter_mut() {
-                row.push_front(false);
-                row.push_back(false);
+        for cube in self.cubes.iter_mut() {
+            for layer in cube.iter_mut() {
+                for row in layer.iter_mut() {
+                    row.push_front(false);
+                    row.push_back(false);
+                }
             }
         }
         self.x_offset += 1
@@ -166,29 +198,36 @@ impl Board {
 
     fn iterate(self) -> Self {
         let mut new_board = self.clone(); // Expensive copy!
-        for z in (-(self.z_offset + 1))..=(self.z_offset + 1) {
-            for y in (-(self.y_offset + 1))..=(self.y_offset + 1) {
-                for x in (-(self.x_offset + 1))..=(self.x_offset + 1) {
-                    // println!("Checking {:?}", (z, y, x));
-                    let new_active_state = self.apply_rules((z, y, x).into());
-                    new_board.set((z, y, x).into(), new_active_state);
+        for w in (-(self.w_offset + 1))..=(self.w_offset + 1) {
+            for z in (-(self.z_offset + 1))..=(self.z_offset + 1) {
+                for y in (-(self.y_offset + 1))..=(self.y_offset + 1) {
+                    for x in (-(self.x_offset + 1))..=(self.x_offset + 1) {
+                        // println!("Checking {:?}", (z, y, x));
+                        let new_active_state = self.apply_rules((w, z, y, x).into());
+                        new_board.set((w, z, y, x).into(), new_active_state);
+                    }
                 }
             }
         }
         //println!("Printing new board to return after iteration");
-        new_board.print_layers();
+        // new_board.print_layers();
         new_board
     }
 
     fn count_total_active(&self) -> usize {
-        self.cubes.iter().flat_map(|layer| layer.iter().flat_map(|row| row.iter().copied())).filter(|x| *x).count()
+        self.cubes.iter()
+            .flat_map(|cube|
+                cube.iter().flat_map(|layer|
+                    layer.iter().flat_map(|row|
+                        row.iter().copied())))
+            .filter(|x| *x).count()
     }
 
-    fn print_layers(&self) {
-        for (z, layer) in self.cubes.iter().enumerate() {
-            Board::print_layer(layer, z as i32 - self.z_offset);
-        }
-    }
+    // fn print_layers(&self) {
+    //     for (z, layer) in self.cubes.iter().enumerate() {
+    //         Board::print_layer(layer, z as i32 - self.z_offset);
+    //     }
+    // }
 
     fn print_layer(layer: &Layer, z: i32) {
         println!("z = {}", z);
@@ -206,23 +245,24 @@ fn get_points() -> Vec<Point> {
     // % 3 == 0 => -1, == % 3 - 1
     // % 3 == 1 => 0,
     // % 3 == 2 => 1,
-    (0..3i32.pow(3u32)).map (|i| {
+    (0..3i32.pow(4u32)).map (|i| {
         (
+            ((i / 27) % 3) - 1,
             ((i / 9) % 3 ) - 1,
             ((i / 3) % 3) - 1,
             i % 3 -1,
         )
-    }).filter(|x| *x != (0, 0, 0))
+    }).filter(|x| *x != (0, 0, 0, 0))
         .map(|x| x.into())
         .collect()
 }
 
-impl From<(i32, i32, i32)> for Point {
-    fn from((z, y, x): (i32, i32, i32)) -> Self {
-        Point(z, y, x)
+impl From<(i32, i32, i32, i32)> for Point {
+    fn from((w, z, y, x): (i32, i32, i32, i32)) -> Self {
+        Point(w, z, y, x)
     }
 }
-type Layer = VecDeque<VecDeque<bool>>;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -231,43 +271,43 @@ mod tests {
     #[test]
     fn test_part_1() {
         let board = parse_input(&fs::read_to_string("./test_inputs/day17").unwrap());
-        assert_eq!(part_1(board), 112);
+        assert_eq!(part_1(board), 848);
     }
 
     #[test]
     fn test_parsing_board() {
         let board = parse_input(&fs::read_to_string("./test_inputs/day17").unwrap());
-        assert_eq!(board.get((0, 0, 0).into()), Some(false));
-        assert_eq!(board.get((1, 0, 0).into()), None);
-        assert_eq!(board.get((0, -1, 0).into()), Some(true));
+        assert_eq!(board.get((0, 0, 0, 0).into()), Some(false));
+        assert_eq!(board.get((0, 1, 0, 0).into()), None);
+        assert_eq!(board.get((0, 0, -1, 0).into()), Some(true));
     }
 
     #[test]
     fn test_parsing_board_and_adding_layers_and_rows() {
         let mut board = parse_input(&fs::read_to_string("./test_inputs/day17").unwrap());
-        assert_eq!(board.get((0, 0, 0).into()), Some(false));
-        assert_eq!(board.get((1, 0, 0).into()), None);
-        assert_eq!(board.get((0, -1, 0).into()), Some(true));
+        assert_eq!(board.get((0, 0, 0, 0).into()), Some(false));
+        assert_eq!(board.get((0, 1, 0, 0).into()), None);
+        assert_eq!(board.get((0, 0, -1, 0).into()), Some(true));
         board.expand_x();
         board.expand_y();
         board.expand_z();
-        assert_eq!(board.get((0, 0, 0).into()), Some(false));
-        assert_eq!(board.get((1, 0, 0).into()), Some(false));
-        assert_eq!(board.get((0, -1, 0).into()), Some(true));
-        assert_eq!(board.get((-1, 0, 0).into()), Some(false));
-        assert_eq!(board.get((-2, 0, 0).into()), None);
-        assert_eq!(board.get((0, -3, 0).into()), None);
-        assert_eq!(board.get((0, -2, 0).into()), Some(false));
-        assert_eq!(board.get((0, -2, -10).into()), None);
-        assert_eq!(board.get((0, 0, -2).into()), Some(false));
+        assert_eq!(board.get((0, 0, 0, 0).into()), Some(false));
+        assert_eq!(board.get((0, 1, 0, 0).into()), Some(false));
+        assert_eq!(board.get((0, 0, -1, 0).into()), Some(true));
+        assert_eq!(board.get((0, -1, 0, 0).into()), Some(false));
+        assert_eq!(board.get((0, -2, 0, 0).into()), None);
+        assert_eq!(board.get((0, 0, -3, 0).into()), None);
+        assert_eq!(board.get((0, 0, -2, 0).into()), Some(false));
+        assert_eq!(board.get((0, 0, -2, -10).into()), None);
+        assert_eq!(board.get((0, 0, 0, -2).into()), Some(false));
     }
 
     #[test]
     fn test_iterating_board() {
         let mut board = parse_input(&fs::read_to_string("./test_inputs/day17").unwrap());
         for i in 0..6 {
-            println!("Printing layers before iteration {}", i + 1);
-            board.print_layers();
+            // println!("Printing layers before iteration {}", i + 1);
+            // board.print_layers();
             board = board.iterate();
         }
     }
