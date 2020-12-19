@@ -286,8 +286,6 @@ mod tests {
     fn test_iterating_board() {
         let mut board = parse_input(&fs::read_to_string("./test_inputs/day17").unwrap());
         for _ in 0..6 {
-            // println!("Printing layers before iteration {}", i + 1);
-            // board.print_layers();
             board = board.iterate();
         }
     }
