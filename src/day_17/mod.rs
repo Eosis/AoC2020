@@ -247,7 +247,6 @@ impl From<(i32, i32, i32, i32)> for Point {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::Itertools;
 
     #[test]
     fn test_part_1() {
@@ -286,7 +285,7 @@ mod tests {
     #[test]
     fn test_iterating_board() {
         let mut board = parse_input(&fs::read_to_string("./test_inputs/day17").unwrap());
-        for i in 0..6 {
+        for _ in 0..6 {
             // println!("Printing layers before iteration {}", i + 1);
             // board.print_layers();
             board = board.iterate();

@@ -165,8 +165,6 @@ fn get_value_from_expr_part_1<T: Iterator<Item = Token>>(iter: &mut T) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hashbrown::HashMap;
-    use std::collections::HashSet;
 
     #[test]
     fn test_tokenizing() {
