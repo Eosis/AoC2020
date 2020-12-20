@@ -9,7 +9,9 @@ pub fn solve_part_1() -> Result<(), ()> {
 }
 
 pub fn solve_part_2() -> Result<(), ()> {
-    unimplemented!()
+    let input = parse_input(&fs::read_to_string("./inputs/day20.txt").unwrap());
+    let solved_grid = solve_complete_grid(input, 12).unwrap();
+    Ok(())
 }
 
 type Grid = Vec<Vec<Option<Tile>>>;
@@ -94,23 +96,24 @@ struct Problem {
     tiles: HashMap<u32, Tile>,
 }
 
-
-fn complicated_part_1(input: Problem, grid_length: usize) -> u64 {
+fn solve_complete_grid(input: Problem, grid_length: usize) -> Option<Grid> {
     let grid = vec![vec![None; grid_length]; grid_length];
-    let result = solve_grid(input.tiles, grid);
-    let grid = result.unwrap();
-    let corners = [
-        grid.first().unwrap().first().unwrap().clone().unwrap().id,
-        grid.first().unwrap().last().unwrap().clone().unwrap().id,
-        grid.last().unwrap().first().unwrap().clone().unwrap().id,
-        grid.last().unwrap().last().unwrap().clone().unwrap().id,
-    ];
-    corners.iter().map(|id| *id as u64).product::<u64>()
+    let (corners, edges) = determine_border_tiles(&input.tiles);
+    let mut tiles = input.tiles;
+    for (k, _) in corners.iter().chain(edges.iter()) {
+        tiles.remove(k);
+    }
+    let grid_with_border = solve_border(corners, edges, grid);
+    if let None = grid_with_border {
+        println!("We couldn't even determine the border... so shameful...");
+        return None;
+    }
+    solve_grid(tiles, grid_with_border.unwrap())
 }
 
 fn part_1(input: Problem) -> u64 {
-    let corners = determine_corners_in_grid(&input.tiles);
-    corners.iter().map(|t| t.id as u64).product::<u64>()
+    let (corners, _) = determine_border_tiles(&input.tiles);
+    corners.iter().map(|(_, t)| t.id as u64).product::<u64>()
 }
 
 #[allow(dead_code)]
@@ -154,12 +157,35 @@ fn parse_input(input: &str) -> Problem {
     Problem { tiles }
 }
 
-fn next_pos_to_check(tiles_left: usize, y_size: usize, x_size: usize) -> (usize, usize) {
-    let total_len = y_size * x_size;
-    let current_nth_tile = total_len - tiles_left;
-    let y = current_nth_tile / x_size;
-    let x = current_nth_tile % x_size;
-    (y, x)
+fn next_pos_to_check(grid: &Grid) -> (usize, usize) {
+    for y in 0..grid.len() {
+        for x in 0..grid[0].len() {
+            if grid[y][x].is_none() {
+                return (y, x);
+            }
+        }
+    }
+    panic!("Oh Dear, I have run out of places to check, mebs some stupid error");
+}
+
+fn next_pos_to_check_in_border(tiles_left: usize, y_size: usize, x_size: usize) -> (usize, usize) {
+    let total_border_size = y_size * 2 + (y_size - 2) * 2;
+    let number_of_tile_to_place = total_border_size - tiles_left + 1;
+    if number_of_tile_to_place <= x_size {
+        (0, number_of_tile_to_place - 1)
+    } else if number_of_tile_to_place <= (x_size + (y_size - 2 ) * 2) {
+        let y = (number_of_tile_to_place - x_size - 1) / 2 + 1;
+        let x = if (number_of_tile_to_place - x_size) % 2 == 0 {
+            x_size - 1
+        } else {
+            0
+        };
+        (y, x)
+    } else {
+        let y = y_size - 1;
+        let x = number_of_tile_to_place - (x_size + (y_size - 2) * 2) - 1;
+        (y, x)
+    }
 }
 
 // for each remaining tile
@@ -181,7 +207,7 @@ fn solve_grid(tiles: HashMap<u32, Tile>, grid: Grid) -> Option<Grid> {
         return Some(grid);
     }
     // set the next tile position to investigate
-    let (y, x) = next_pos_to_check(tiles.len(), grid.len(), grid[0].len());
+    let (y, x) = next_pos_to_check(&grid);
     if y == x {
         println!("I've moved onto ({}, {})", y, x);
     }
@@ -196,6 +222,54 @@ fn solve_grid(tiles: HashMap<u32, Tile>, grid: Grid) -> Option<Grid> {
                     let mut new_tiles = tiles.clone();
                     new_tiles.remove(&tile_id);
                     if let Some(grid) = solve_grid(new_tiles, new_grid) {
+                        return Some(grid);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+fn is_corner_position((y, x): (usize, usize), grid: &Grid) -> bool {
+    let max_y_idx = grid.len() - 1;
+    let max_x_idx = grid[0].len() - 1;
+    (y, x) == (0, 0) || (y, x) == (0, max_x_idx) || (y, x) == (max_y_idx, 0) || (y, x) == (max_y_idx, max_x_idx)
+}
+
+fn solve_border(corners: HashMap<u32, Tile>, edges: HashMap<u32, Tile>, grid: Grid) -> Option<Grid> {
+    // if there are no tiles left! return the solved border. :)
+    if corners.is_empty() && edges.is_empty() {
+        return Some(grid);
+    }
+
+    // set the next tile position to investigate
+    let (y, x) = next_pos_to_check_in_border(corners.len() + edges.len(), grid.len(), grid[0].len());
+    let is_corner = is_corner_position((y, x), &grid);
+    let mut to_choose_from = if is_corner {
+        &corners
+    } else {
+        &edges
+    };
+
+    for (_, tile) in to_choose_from.clone().iter() {
+        for rotation in 0..4 {
+            for flip in [Flip::Zero, Flip::Y, Flip::X].iter() {
+                let tile = tile.rotated(rotation).flipped(*flip);
+                let tile_id = tile.id;
+                let mut new_grid = grid.clone();
+                new_grid[y][x] = Some(tile);
+                if check_valid(&new_grid) {
+                    let mut chosen_tile_set = (*to_choose_from).clone();
+                    chosen_tile_set.remove(&tile_id);
+                    let (corners, edges) = {
+                        if is_corner {
+                            (chosen_tile_set, edges.clone())
+                        } else {
+                            (corners.clone(), chosen_tile_set)
+                        }
+                    };
+                    if let Some(grid) = solve_border(corners, edges, new_grid) {
                         return Some(grid);
                     }
                 }
@@ -292,7 +366,7 @@ fn count_number_of_matches(tile: &Tile, values: &[u32]) -> usize {
     values.iter().filter(|val| check_any_side_matches(tile, **val)).count()
 }
 
-fn determine_corners_in_grid(tiles: &HashMap<u32, Tile>) -> Vec<Tile> {
+fn determine_border_tiles(tiles: &HashMap<u32, Tile>) -> (HashMap<u32, Tile>, HashMap<u32, Tile>) {
     let counts_of_sides = populate_counts_of_sides(tiles);
     let single_count_values: Vec<u32> = counts_of_sides
         .iter()
@@ -300,12 +374,19 @@ fn determine_corners_in_grid(tiles: &HashMap<u32, Tile>) -> Vec<Tile> {
         .map(|(k, _)| k)
         .copied()
         .collect();
-    let double_single_sides = tiles.iter()
+    // Corner pieces have two values that only appear once on them.
+    let corners = tiles.iter()
         .filter(|(_, tile)| count_number_of_matches(*tile, &single_count_values) == 2)
-        .map(|(_, t)| t.clone())
+        .map(|(k, t)| (*k, t.clone()))
         .collect();
-    println!("got double single sides of {:?}", double_single_sides);
-    double_single_sides
+
+    // Edges only have one side that appears only once.
+    let edges = tiles.iter()
+        .filter(|(_, tile)| count_number_of_matches(*tile, &single_count_values) == 1)
+        .map(|(k, t)| (*k, t.clone()))
+        .collect();
+
+    (corners, edges)
 }
 
 #[cfg(test)]
@@ -390,31 +471,13 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_grid() {
+    fn test_solve_complete_grid() {
         let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
-        let mut grid = vec![];
-        grid.push(vec![None, None, None]);
-        grid.push(vec![None, None, None]);
-        grid.push(vec![None, None, None]);
-        let result = solve_grid(input.tiles, grid);
-        assert!(result.is_some());
-        let grid = result.unwrap();
-        let corners = [
-            grid[0][0].clone().unwrap().id,
-            grid[0][2].clone().unwrap().id,
-            grid[2][0].clone().unwrap().id,
-            grid[2][2].clone().unwrap().id,
-        ];
-        assert_eq!(corners.iter().map(|id| *id as u64).product::<u64>(), 20899048083289);
+        assert!(solve_complete_grid(input, 3).is_some());
     }
 
     #[test]
-    fn test_complicated_part_1() {
-        let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
-        assert_eq!(complicated_part_1(input, 3), 20899048083289);
-    }
-
-    #[test]
+    #[ignore]
     fn count_sides_in_input() {
         let input = parse_input(&fs::read_to_string("./inputs/day20.txt").unwrap());
         let counts_of_sides = populate_counts_of_sides(&input.tiles);
@@ -428,5 +491,40 @@ mod tests {
     fn test_part_1() {
         let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
         assert_eq!(part_1(input), 20899048083289);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_determining_border_pieces() {
+        let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
+        let (corners, edges) = determine_border_tiles(&input.tiles);
+        assert_eq!(corners.len() + edges.len(), 8);
+    }
+
+    #[test]
+    fn test_next_pos_to_check_in_border() {
+        for i in 0..12 {
+            println!("{:?}", next_pos_to_check_in_border(12 - i, 4, 4));
+        }
+    }
+
+    #[test]
+    fn test_solve_border() {
+        let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
+        let mut grid = vec![];
+        grid.push(vec![None, None, None]);
+        grid.push(vec![None, None, None]);
+        grid.push(vec![None, None, None]);
+        let (corners, edges) = determine_border_tiles(&input.tiles);
+        let result = solve_border(corners, edges, grid);
+        assert!(result.is_some());
+        let grid = result.unwrap();
+        let corners = [
+            grid[0][0].clone().unwrap().id,
+            grid[0][2].clone().unwrap().id,
+            grid[2][0].clone().unwrap().id,
+            grid[2][2].clone().unwrap().id,
+        ];
+        assert_eq!(corners.iter().map(|id| *id as u64).product::<u64>(), 20899048083289);
     }
 }
