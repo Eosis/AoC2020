@@ -4,7 +4,7 @@ use std::{fmt, fs};
 
 pub fn solve_part_1() -> Result<(), ()> {
     let input = parse_input(&fs::read_to_string("./inputs/day20.txt").unwrap());
-    println!("{}", part_1(input, 12));
+    println!("{}", part_1(input));
     Ok(())
 }
 
@@ -94,7 +94,8 @@ struct Problem {
     tiles: HashMap<u32, Tile>,
 }
 
-fn part_1(input: Problem, grid_length: usize) -> u64 {
+
+fn complicated_part_1(input: Problem, grid_length: usize) -> u64 {
     let grid = vec![vec![None; grid_length]; grid_length];
     let result = solve_grid(input.tiles, grid);
     let grid = result.unwrap();
@@ -105,6 +106,11 @@ fn part_1(input: Problem, grid_length: usize) -> u64 {
         grid.last().unwrap().last().unwrap().clone().unwrap().id,
     ];
     corners.iter().map(|id| *id as u64).product::<u64>()
+}
+
+fn part_1(input: Problem) -> u64 {
+    let corners = determine_corners_in_grid(&input.tiles);
+    corners.iter().map(|t| t.id as u64).product::<u64>()
 }
 
 #[allow(dead_code)]
@@ -138,6 +144,7 @@ fn tile_from_tile_description(input: &str) -> Tile {
         left,
     }
 }
+
 fn parse_input(input: &str) -> Problem {
     let tiles = input
         .split("\n\n")
@@ -264,6 +271,43 @@ fn check_left(to_check: &Tile, left: &Tile) -> bool {
     to_check.left == left.right
 }
 
+fn populate_counts_of_sides(tiles: &HashMap<u32, Tile>) -> HashMap<u32, usize> {
+    tiles.iter()
+        .fold(HashMap::new(), |mut acc, (_, v)| -> HashMap<u32, usize> {
+            for side in [v.top, v.right, v.bottom, v.left].iter() {
+                let count = acc.entry(*side).or_insert(0);
+                *count += 1;
+                let count = acc.entry(Tile::reversed(*side)).or_insert(0);
+                *count += 1;
+            }
+            acc
+        })
+}
+
+fn check_any_side_matches(tile: &Tile, value: u32) -> bool {
+    tile.top == value || tile.bottom == value || tile.right == value || tile.left == value
+}
+
+fn count_number_of_matches(tile: &Tile, values: &[u32]) -> usize {
+    values.iter().filter(|val| check_any_side_matches(tile, **val)).count()
+}
+
+fn determine_corners_in_grid(tiles: &HashMap<u32, Tile>) -> Vec<Tile> {
+    let counts_of_sides = populate_counts_of_sides(tiles);
+    let single_count_values: Vec<u32> = counts_of_sides
+        .iter()
+        .filter(|(_, v)| **v == 1)
+        .map(|(k, _)| k)
+        .copied()
+        .collect();
+    let double_single_sides = tiles.iter()
+        .filter(|(_, tile)| count_number_of_matches(*tile, &single_count_values) == 2)
+        .map(|(_, t)| t.clone())
+        .collect();
+    println!("got double single sides of {:?}", double_single_sides);
+    double_single_sides
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -365,8 +409,24 @@ mod tests {
     }
 
     #[test]
+    fn test_complicated_part_1() {
+        let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
+        assert_eq!(complicated_part_1(input, 3), 20899048083289);
+    }
+
+    #[test]
+    fn count_sides_in_input() {
+        let input = parse_input(&fs::read_to_string("./inputs/day20.txt").unwrap());
+        let counts_of_sides = populate_counts_of_sides(&input.tiles);
+        for (k, v) in counts_of_sides.iter().sorted_by_key(|(_, v)| **v) {
+            println!("{} appears {} times", k, v);
+        }
+        println!("There are {} sides with only 1 entry", counts_of_sides.iter().filter(|(_, v)| **v == 1).count());
+    }
+
+    #[test]
     fn test_part_1() {
         let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
-        assert_eq!(part_1(input, 3), 20899048083289);
+        assert_eq!(part_1(input), 20899048083289);
     }
 }
