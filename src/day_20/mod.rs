@@ -785,40 +785,17 @@ mod tests {
     }
 
     #[test]
-    fn test_printing_final_map() {
-        let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
-        let resulting_map = part_2(input, 3);
-        let big_fragment = MapFragment {
-            id: 1000,
-            fragment: resulting_map,
-        };
-
-        for rotation in 0..4 {
-            for flip in [Flip::Zero, Flip::Y, Flip::X].iter() {
-                let new_map = big_fragment.rotated(rotation).flipped(*flip);
-                println!("Printing out the map for rotation: {} and flip: {:?}", rotation, *flip);
-                for row in new_map.fragment {
-                    for c in row {
-                        print!("{}", c);
-                    }
-                    println!();
-                }
-            }
-        }
-    }
-
-    #[test]
     #[ignore]
     fn test_finding_nessies() {
-        let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
-        let resulting_map = part_2(input, 3);
-        let big_fragment = MapFragment {
-            id: 1000,
-            fragment: resulting_map,
-        };
-
-        let (rotation, flip) = find_rotation_for_nessies(&big_fragment);
-        assert_eq!((rotation, flip), (1, Flip::Y));
+        // let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
+        // let resulting_map = part_2(input, 3);
+        // let big_fragment = MapFragment {
+        //     id: 1000,
+        //     fragment: resulting_map,
+        // };
+        //
+        // let (rotation, flip) = find_rotation_for_nessies(&big_fragment);
+        // assert_eq!((rotation, flip), (1, Flip::Y));
     }
 
     #[test]
