@@ -3,9 +3,7 @@ mod linked_list;
 use crate::day_23::linked_list::print_list_items;
 use hashbrown::HashMap;
 use std::cell::RefCell;
-use std::fs;
 use std::rc::Rc;
-use std::time::{Duration, Instant};
 
 pub fn solve_part_1() -> Result<(), ()> {
     part_1("562893147");
@@ -75,63 +73,6 @@ fn get_new_label(current_label: u32, lifted: &[u32], max_value: u32) -> u32 {
         }
     }
     new_label
-}
-
-const DEBUG: bool = true;
-fn run_game(mut game: Vec<u32>, turns: usize) -> Vec<u32> {
-    let mut current_label = game[0];
-    println!("Starting current label is {}", current_label);
-    for i in 0..turns {
-        if i % 10_000 == 0 || DEBUG {
-            println!("Loop {}", i);
-            println!(
-                "Current game state: {:#?}",
-                game.iter().copied().take(50).collect::<Vec<u32>>()
-            );
-        }
-        let after_current_label = game
-            .iter()
-            .cycle()
-            .skip_while(|label| **label != current_label)
-            .skip(1) // Skip the label as well.
-            .copied();
-        let mut three_immediately_clockwise: Vec<_> = after_current_label.clone().take(3).collect();
-        let mut after_these_three: Vec<_> = after_current_label.clone().skip(3).take(game.len() - 3 - 1).collect();
-        let mut full_remaining = vec![current_label];
-        full_remaining.append(&mut after_these_three);
-        let destination_label = get_new_label(current_label, &three_immediately_clockwise, 9);
-        if DEBUG {
-            println!("My destination label is {}.", destination_label);
-        }
-
-        let start_time = Instant::now();
-        let mut result_iter = full_remaining
-            .iter()
-            .cycle()
-            .skip_while(|label| **label != destination_label);
-        let mut full_result: Vec<u32> = vec![];
-        full_result.push(*result_iter.next().unwrap());
-        full_result.append(&mut three_immediately_clockwise);
-        full_result.append(&mut result_iter.take(game.len() - 3 - 1).copied().collect::<Vec<_>>());
-        game = full_result;
-        let elapsed = start_time.elapsed().as_nanos();
-        if DEBUG {
-            println!("Building the new vec took {} ns", elapsed);
-        }
-
-        let start_time = Instant::now();
-        let new_idx_of_current_label = (game.iter().position(|x| *x == current_label).unwrap() + 1) % game.len();
-        let elapsed = start_time.elapsed().as_nanos();
-        current_label = game[new_idx_of_current_label];
-        if DEBUG {
-            println!("The find took {} ns", elapsed);
-            println!(
-                "I needed to set {} as the new current label which was at idx {}",
-                current_label, new_idx_of_current_label
-            );
-        }
-    }
-    game
 }
 
 fn setup_list_with_map_smaller(
@@ -206,17 +147,16 @@ fn get_values_of_removed(node: Rc<RefCell<linked_list::Node<u32>>>) -> [u32; 3] 
 }
 
 fn run_game_as_list(problem: Problem, moves: usize) -> HashMap<u32, Rc<RefCell<linked_list::Node<u32>>>> {
-    use linked_list::List;
     use linked_list::Node;
     let Problem {
-        map: map,
-        list: list,
+        map,
+        list,
         starting_label: mut current_label,
-        max_value: max_value,
+        max_value,
     } = problem;
 
     for i in 0..moves {
-        if DEBUG && (i % 1000000 == 0) {
+        if i % 1000000 == 0 {
             println!("at {}", i);
         }
         let current_cup = Rc::clone(map.get(&current_label).unwrap());
