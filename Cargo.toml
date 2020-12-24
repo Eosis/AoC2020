@@ -15,3 +15,6 @@ itertools = "0.9.0"
 lazy_static = "1.4.0"
 num = "0.3.1"
 regex = "1.4.2"
+
+[unstable]
+linked_list_cursors = 'yes'

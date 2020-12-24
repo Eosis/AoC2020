@@ -13,6 +13,7 @@ mod day_2;
 mod day_20;
 mod day_21;
 mod day_22;
+mod day_23;
 mod day_3;
 mod day_4;
 mod day_5;
@@ -83,6 +84,8 @@ fn main() -> Result<()> {
         (21, 2) => day_21::solve_part_2().expect(FAILURE_TEXT),
         (22, 1) => day_22::solve_part_1().expect(FAILURE_TEXT),
         (22, 2) => day_22::solve_part_2().expect(FAILURE_TEXT),
+        (23, 1) => day_23::solve_part_1().expect(FAILURE_TEXT),
+        (23, 2) => day_23::solve_part_2().expect(FAILURE_TEXT),
         (_, _) => unimplemented!("This day no work yet, brah."),
     };
     Ok(())
