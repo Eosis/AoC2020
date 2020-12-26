@@ -1,6 +1,6 @@
-use std::fs;
-use itertools::Itertools;
 use hashbrown::HashMap;
+use itertools::Itertools;
+use std::fs;
 
 pub fn solve_part_1() -> Result<(), ()> {
     let input = parse_input(&fs::read_to_string("./inputs/day_24").unwrap());
@@ -15,7 +15,10 @@ fn part_1(input: Vec<Vec<Direction>>) -> usize {
 
 #[inline]
 fn count_black_tiles_on_floor(floor: &HashMap<(i32, i32), Tile>) -> usize {
-    floor.iter().filter(|(_, v)| matches!(v.state, TileColor::Black)).count()
+    floor
+        .iter()
+        .filter(|(_, v)| matches!(v.state, TileColor::Black))
+        .count()
 }
 
 pub fn solve_part_2() -> Result<(), ()> {
@@ -43,16 +46,12 @@ fn str_to_direction(input: &str) -> Direction {
 
 fn line_to_tile_directions(line: &str) -> Vec<Direction> {
     line.chars()
-        .batching(|it| {
-            match it.next() {
-                None => None,
-                Some(c) => match c {
-                    'n' | 's' => {
-                        Some([c, it.next().unwrap()].iter().join(""))
-                    },
-                    _ => Some(c.to_string())
-                }
-            }
+        .batching(|it| match it.next() {
+            None => None,
+            Some(c) => match c {
+                'n' | 's' => Some([c, it.next().unwrap()].iter().join("")),
+                _ => Some(c.to_string()),
+            },
         })
         .map(|individual| str_to_direction(&individual))
         .collect()
@@ -71,31 +70,38 @@ fn trundle_tile(directions: Vec<Direction>) -> (i32, i32) {
 
 fn set_tiles_from_directions(directions: Vec<Vec<Direction>>) -> HashMap<(i32, i32), Tile> {
     let mut tile_locations = HashMap::new();
-    for (i, tile) in directions.into_iter().enumerate() {
+    for (_, tile) in directions.into_iter().enumerate() {
         let result = trundle_tile(tile);
-        let mut entry = tile_locations.entry(result) // Get the tile to flip
-            .or_insert(Tile { location: result, state: TileColor::White });
+        let mut entry = tile_locations
+            .entry(result) // Get the tile to flip
+            .or_insert(Tile {
+                location: result,
+                state: TileColor::White,
+            });
         entry.state = entry.state.flip();
     }
     tile_locations
 }
 
 fn adjacent_black_tiles(tile: Tile, floor: &HashMap<(i32, i32), Tile>) -> usize {
-    neighbors(tile)
-        .into_iter()
-        .fold(0, |acc, pos_to_check| {
-            let neighbor_color = floor
-                .get(&pos_to_check)
-                .map(|tile| tile.state)
-                .unwrap_or(TileColor::White);
-            if neighbor_color == TileColor::Black { acc + 1 } else { acc }
-        })
+    neighbors(tile).into_iter().fold(0, |acc, pos_to_check| {
+        let neighbor_color = floor
+            .get(&pos_to_check)
+            .map(|tile| tile.state)
+            .unwrap_or(TileColor::White);
+        if neighbor_color == TileColor::Black {
+            acc + 1
+        } else {
+            acc
+        }
+    })
 }
 
 fn neighbors(tile: Tile) -> Vec<(i32, i32)> {
     let adjacent_offsets = Direction::adjacent_offsets();
     let current_position = tile.location;
-    adjacent_offsets.iter()
+    adjacent_offsets
+        .iter()
         .map(|offset| (current_position.0 + offset.0, current_position.1 + offset.1))
         .collect()
 }
@@ -109,7 +115,7 @@ fn new_tile_state(tile: Tile, floor: &HashMap<(i32, i32), Tile>) -> TileColor {
             } else {
                 TileColor::Black
             }
-        },
+        }
         TileColor::White => {
             if adjacent_black_tiles == 2 {
                 TileColor::Black
@@ -122,8 +128,14 @@ fn new_tile_state(tile: Tile, floor: &HashMap<(i32, i32), Tile>) -> TileColor {
 
 fn print_floor(floor: &HashMap<(i32, i32), Tile>) {
     // println!("{:#?}", floor);
-    let y_extent = (floor.iter().map(|(k, _)| k.0).min().unwrap(), floor.iter().map(|(k, _)| k.0).max().unwrap());
-    let x_extent = (floor.iter().map(|(k, _)| k.1).min().unwrap(), floor.iter().map(|(k, _)| k.1).max().unwrap());
+    let y_extent = (
+        floor.iter().map(|(k, _)| k.0).min().unwrap(),
+        floor.iter().map(|(k, _)| k.0).max().unwrap(),
+    );
+    let x_extent = (
+        floor.iter().map(|(k, _)| k.1).min().unwrap(),
+        floor.iter().map(|(k, _)| k.1).max().unwrap(),
+    );
     print!("          ");
     let x_range_to_print = (-x_extent.1 - 1)..=(x_extent.1 + 1);
     let y_range_to_print = (-y_extent.1 - 1)..=(y_extent.1 + 1);
@@ -147,12 +159,10 @@ fn print_floor(floor: &HashMap<(i32, i32), Tile>) {
             let to_print = floor.get(&(y, x));
             let to_print = match to_print {
                 None => ".",
-                Some(&Tile { state: color,  ..}) => {
-                    match color {
-                        TileColor::Black => "b",
-                        TileColor::White => "W",
-                    }
-                }
+                Some(&Tile { state: color, .. }) => match color {
+                    TileColor::Black => "b",
+                    TileColor::White => "W",
+                },
             };
             print!("{} ", to_print);
         }
@@ -167,14 +177,20 @@ fn run_game_of_life(mut floor: HashMap<(i32, i32), Tile>, iterations: usize) -> 
         print_floor(&floor);
     }
 
-    for i in 0..iterations  {
+    for i in 0..iterations {
         let mut new_floor: HashMap<(i32, i32), Tile> = HashMap::new();
         for (position, tile) in floor.iter().filter(|(_, v)| v.state == TileColor::Black) {
             let mut tiles_to_set = vec![*position];
             tiles_to_set.append(&mut neighbors(*tile));
-            let tiles_to_set: Vec<_> = tiles_to_set.iter().map(|tile| {
-                floor.get(tile).copied().unwrap_or( Tile { location: *tile, state: TileColor::White })
-            }).collect();
+            let tiles_to_set: Vec<_> = tiles_to_set
+                .iter()
+                .map(|tile| {
+                    floor.get(tile).copied().unwrap_or(Tile {
+                        location: *tile,
+                        state: TileColor::White,
+                    })
+                })
+                .collect();
 
             for tile in tiles_to_set {
                 if new_floor.get(&(tile.location)).is_none() {
@@ -235,13 +251,14 @@ impl Direction {
             Self::SE => (-1, 1),
             Self::SW => (-1, -1),
             Self::W => (0, -2),
-            Self::NW => (1, -1)
+            Self::NW => (1, -1),
         }
     }
 
     #[inline]
     fn adjacent_offsets() -> Vec<(i32, i32)> {
-        [Self::NE, Self::E, Self::SE, Self::SW, Self::W, Self::NW].iter()
+        [Self::NE, Self::E, Self::SE, Self::SW, Self::W, Self::NW]
+            .iter()
             .map(Direction::direction_to_offset)
             .collect()
     }
@@ -268,7 +285,7 @@ mod tests {
             Direction::NW,
             Direction::W,
             Direction::NW,
-            Direction::SE
+            Direction::SE,
         ];
         assert_eq!(line_to_tile_directions("seswneswswsenwwnwse"), correct);
         assert_eq!(trundle_tile(correct), (-3, -3));
@@ -280,20 +297,34 @@ mod tests {
         assert_eq!(part_2(input.clone(), 1), 15);
         assert_eq!(part_2(input.clone(), 3), 25);
         assert_eq!(part_2(input.clone(), 50), 566);
-        assert_eq!(part_2(input.clone(), 100), 2208);
+        assert_eq!(part_2(input, 100), 2208);
     }
 
     #[test]
     fn test_parts() {
         let tiles = vec![
-            Tile {location: (0, 2), state: TileColor::White },
-            Tile {location: (-1, -1), state: TileColor::Black },
-            Tile {location: (0, 2), state: TileColor::White},
-            Tile {location: (1, -1), state: TileColor::Black},
+            Tile {
+                location: (0, 2),
+                state: TileColor::White,
+            },
+            Tile {
+                location: (-1, -1),
+                state: TileColor::Black,
+            },
+            Tile {
+                location: (0, 2),
+                state: TileColor::White,
+            },
+            Tile {
+                location: (1, -1),
+                state: TileColor::Black,
+            },
         ];
         let floor: HashMap<(i32, i32), Tile> = tiles.into_iter().map(|tile| (tile.location, tile)).collect();
-        let tile_to_check = Tile { location: (0, 0), state: TileColor::White };
-        let correct = 2;
+        let tile_to_check = Tile {
+            location: (0, 0),
+            state: TileColor::White,
+        };
         assert_eq!(adjacent_black_tiles(tile_to_check, &floor), 2);
         assert_eq!(new_tile_state(tile_to_check, &floor), TileColor::Black);
     }
@@ -301,10 +332,22 @@ mod tests {
     #[test]
     fn test_print_floor() {
         let tiles = vec![
-            Tile {location: (0, -2), state: TileColor::White },
-            Tile {location: (-1, -1), state: TileColor::Black },
-            Tile {location: (0, 2), state: TileColor::White},
-            Tile {location: (1, -1), state: TileColor::Black},
+            Tile {
+                location: (0, -2),
+                state: TileColor::White,
+            },
+            Tile {
+                location: (-1, -1),
+                state: TileColor::Black,
+            },
+            Tile {
+                location: (0, 2),
+                state: TileColor::White,
+            },
+            Tile {
+                location: (1, -1),
+                state: TileColor::Black,
+            },
         ];
         let floor: HashMap<(i32, i32), Tile> = tiles.into_iter().map(|tile| (tile.location, tile)).collect();
         print_floor(&floor);
@@ -313,9 +356,18 @@ mod tests {
     #[test]
     fn test_simple_game() {
         let tiles = vec![
-            Tile { location: (-1, -1), state: TileColor::Black },
-            Tile { location: (-1, 1), state: TileColor::Black },
-            Tile { location: (0, 0), state: TileColor::White },
+            Tile {
+                location: (-1, -1),
+                state: TileColor::Black,
+            },
+            Tile {
+                location: (-1, 1),
+                state: TileColor::Black,
+            },
+            Tile {
+                location: (0, 0),
+                state: TileColor::White,
+            },
         ];
         let floor = tiles.into_iter().map(|tile| (tile.location, tile)).collect();
         run_game_of_life(floor, 1);
