@@ -15,6 +15,11 @@ pub fn solve_part_2() -> Result<(), ()> {
     Ok(())
 }
 
+fn part_1(input: Problem) -> u64 {
+    let (corners, _) = determine_border_tiles(&input.tiles);
+    corners.iter().map(|(_, t)| t.id as u64).product::<u64>()
+}
+
 fn part_2(input: Problem, grid_size: usize) -> usize {
     let map_fragments = input.map_fragments.clone();
     let solved_grid = solve_complete_grid(input, grid_size).unwrap();
@@ -165,11 +170,6 @@ fn solve_complete_grid(input: Problem, grid_length: usize) -> Option<Grid> {
     solve_grid(tiles, grid_with_border.unwrap())
 }
 
-fn part_1(input: Problem) -> u64 {
-    let (corners, _) = determine_border_tiles(&input.tiles);
-    corners.iter().map(|(_, t)| t.id as u64).product::<u64>()
-}
-
 fn hash_dots_to_int(hash_dots: &str) -> u32 {
     let as_bin: String = hash_dots.chars().map(|c| if c == '#' { '1' } else { '0' }).collect();
     u32::from_str_radix(&as_bin, 2).unwrap()
@@ -301,15 +301,17 @@ fn next_pos_to_check(grid: &Grid) -> (usize, usize) {
             }
         }
     }
-    panic!("Oh Dear, I have run out of places to check, mebs some stupid error");
+    panic!("Tried to find the next position for a completed grid.");
 }
 
 fn next_pos_to_check_in_border(tiles_left: usize, y_size: usize, x_size: usize) -> (usize, usize) {
     let total_border_size = y_size * 2 + (y_size - 2) * 2;
     let number_of_tile_to_place = total_border_size - tiles_left + 1;
     if number_of_tile_to_place <= x_size {
+        // The top border.
         (0, number_of_tile_to_place - 1)
     } else if number_of_tile_to_place <= (x_size + (y_size - 2) * 2) {
+        // The first and last elements of each row.
         let y = (number_of_tile_to_place - x_size - 1) / 2 + 1;
         let x = if (number_of_tile_to_place - x_size) % 2 == 0 {
             x_size - 1
@@ -318,24 +320,12 @@ fn next_pos_to_check_in_border(tiles_left: usize, y_size: usize, x_size: usize) 
         };
         (y, x)
     } else {
+        // The bottom border.
         let y = y_size - 1;
         let x = number_of_tile_to_place - (x_size + (y_size - 2) * 2) - 1;
         (y, x)
     }
 }
-
-// for each remaining tile
-// for each rotation
-//for each flipation
-// insert the tile into the next available position in the grid
-// if valid, solve the remaining grid without this tile:
-// take tile from hashmap and clone it.
-// add this tile to the grid.
-// solve for the new grid and tile set.
-// return the grid if it is solved from this call, otherwise loopy loopy
-// if invalid,
-// try the next one!
-// None
 
 fn solve_grid(tiles: HashMap<u32, Tile>, grid: Grid) -> Option<Grid> {
     // if there are no tiles left! return the solved grid. :)
@@ -416,12 +406,8 @@ fn solve_border(corners: HashMap<u32, Tile>, edges: HashMap<u32, Tile>, grid: Gr
 fn check_valid(grid: &Grid) -> bool {
     for y in 0..grid.len() {
         for x in 0..grid[0].len() {
-            // println!("Checking ({}, {})", y, x);
-            if grid[y][x].is_some() {
-                // println!("Twas SOME");
-                if !check_tile((y, x), grid) {
-                    return false;
-                }
+            if grid[y][x].is_some() && !check_tile((y, x), grid) {
+                return false;
             }
         }
     }
@@ -782,20 +768,6 @@ mod tests {
                               #.####..\n\
                               #..#.##.";
         assert_eq!(full, expected);
-    }
-
-    #[test]
-    #[ignore]
-    fn test_finding_nessies() {
-        // let input = parse_input(&fs::read_to_string("./test_inputs/day20").unwrap());
-        // let resulting_map = part_2(input, 3);
-        // let big_fragment = MapFragment {
-        //     id: 1000,
-        //     fragment: resulting_map,
-        // };
-        //
-        // let (rotation, flip) = find_rotation_for_nessies(&big_fragment);
-        // assert_eq!((rotation, flip), (1, Flip::Y));
     }
 
     #[test]
